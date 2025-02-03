@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
+import 'package:flutterapp/notifiers/auth.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -14,66 +14,6 @@ class _SignInPageState extends State<SignInPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
-
-  Future<void> _signInWithGoogle() async {
-    debugPrint('signInWithGoogle');
-    setState(() => _isLoading = true);
-    try {
-      // Trigger the authentication flow
-      debugPrint('Attempting to get Google user...');
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      
-      if (googleUser == null) {
-        throw Exception('Google Sign In was canceled by user');
-      }
-
-      debugPrint('Getting auth details...');
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      
-      debugPrint('Creating credentials...');
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      
-      debugPrint('Signing in to Firebase...');
-      // Once signed in, return the UserCredential
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      debugPrint('Successfully signed in with Google');
-    } catch (e) {
-      debugPrint('Error during Google Sign In: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sign in failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithEmailPassword() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-      // Navigate to home page or show success message
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +30,7 @@ class _SignInPageState extends State<SignInPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _signInWithGoogle,
+                    onPressed: () => context.read<AuthNotifier>().signInWithGoogle(),
                   icon: SvgPicture.asset(
                     'assets/google.svg',
                     height: 24,
@@ -141,7 +81,7 @@ class _SignInPageState extends State<SignInPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _signInWithEmailPassword,
+                  onPressed: () => context.read<AuthNotifier>().signInWithEmailPassword(),
                   child: const Text(
                     'Sign in with Email',
                     style: TextStyle(fontSize: 16),
