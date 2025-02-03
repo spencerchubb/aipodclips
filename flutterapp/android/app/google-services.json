@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "679796459336",
+    "project_id": "aipodclips-8369c",
+    "storage_bucket": "aipodclips-8369c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:679796459336:android:df060f459d64f16d3a557d",
+        "android_client_info": {
+          "package_name": "com.example.flutterapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "679796459336-j8juqq59chlecen541hjvni2sfahd1ov.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxTtEnjqRzrMX_iTXIqx-jYhpfFRrlcHI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "679796459336-j8juqq59chlecen541hjvni2sfahd1ov.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
