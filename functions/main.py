@@ -36,6 +36,7 @@ def download(body):
                 info = ydl.extract_info(url, download=True)
                 video_id = info['id']
                 video_ext = info['ext']
+                video_title = info['title']
                 video_path = f"{temp_dir}/{video_id}.{video_ext}"
                 
                 # Upload to Firebase Storage
@@ -43,8 +44,8 @@ def download(body):
                 blob.upload_from_filename(video_path)
                 
                 return {
-                    "message": "Download complete",
-                    "url": blob.public_url
+                    "url": blob.public_url,
+                    "title": video_title,
                 }
         except Exception as e:
             print(f"Error: {str(e)}")
