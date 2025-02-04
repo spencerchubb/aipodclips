@@ -28,7 +28,8 @@ class _HomePageState extends State<HomePage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16),
+            // Top padding avoids label being cut off
+            padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
             child: TextField(
               controller: _urlController,
               onChanged: (value) {
@@ -47,6 +48,11 @@ class _HomePageState extends State<HomePage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
+                  if (_urlController.text.isEmpty) {
+                    setState(() => fetchVideoText = 'Please enter a URL 🤗');
+                    return;
+                  }
+
                   if (fetchVideoText != 'Fetch video') return;
                   setState(() => fetchVideoText = 'Fetching video... ⏳');
                   final originalUrl = _urlController.text;
@@ -54,6 +60,12 @@ class _HomePageState extends State<HomePage> {
                     'action': 'download',
                     'url': originalUrl,
                   });
+
+                  if (response['message'].contains('not a valid URL')) {
+                    setState(() => fetchVideoText = 'Not a valid URL ❌');
+                    return;
+                  }
+
                   final storageUrl = response['url'];
                   final title = response['title'];
                   FirebaseFirestore.instance.collection('videos').doc().set({

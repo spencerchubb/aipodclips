@@ -82,6 +82,7 @@ def download(body):
                 blob.upload_from_filename(video_path)
                 
                 return {
+                    "message": "Video downloaded successfully",
                     "url": blob.public_url,
                     "title": video_title,
                 }
