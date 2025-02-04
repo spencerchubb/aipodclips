@@ -41,7 +41,7 @@ def preprocess_audio(input_path: Path) -> Path:
         output_path.unlink(missing_ok=True)
         raise RuntimeError(f"FFmpeg conversion failed: {e.stderr.decode() if e.stderr else str(e)}")
     
-def transcribe_single_chunk(client: Groq, chunk: AudioSegment, chunk_num: int, total_chunks: int, prompt: str) -> tuple[dict, float]:
+def transcribe_single_chunk(client: Groq, chunk: AudioSegment, chunk_num: int, total_chunks: int) -> tuple[dict, float]:
     """
     Transcribe a single audio chunk with Groq API.
     
@@ -65,12 +65,13 @@ def transcribe_single_chunk(client: Groq, chunk: AudioSegment, chunk_num: int, t
             
             start_time = time.time()
             try:
+                # DECISION: I tried using the prompt parameter, but it caused a repetition bug in Whisper.
+                # The same phrase would be repeated like 50 times.
                 result = client.audio.transcriptions.create(
                     file=("chunk.flac", temp_file, "audio/flac"),
                     model="whisper-large-v3",
                     language="en", # We highly recommend specifying the language of your audio if you know it
                     response_format="verbose_json",
-                    prompt=prompt,
                 )
                 api_time = time.time() - start_time
                 total_api_time += api_time
@@ -290,7 +291,7 @@ def save_results(result: dict, audio_path: Path) -> Path:
         print(f"Error saving results: {str(e)}")
         raise
 
-def transcribe_audio_in_chunks(audio_path: str, prompt: str, chunk_length: int = 600, overlap: int = 10) -> dict:
+def transcribe_audio_in_chunks(audio_path: str, chunk_length: int = 600, overlap: int = 10) -> dict:
     """
     Transcribe audio in chunks with overlap with Whisper via Groq API.
     
@@ -345,7 +346,7 @@ def transcribe_audio_in_chunks(audio_path: str, prompt: str, chunk_length: int =
             print(f"Time range: {start/1000:.1f}s - {end/1000:.1f}s")
                 
             chunk = audio[start:end]
-            result, chunk_time = transcribe_single_chunk(client, chunk, i+1, total_chunks, prompt)
+            result, chunk_time = transcribe_single_chunk(client, chunk, i+1, total_chunks)
             total_transcription_time += chunk_time
             results.append((result, start))
             

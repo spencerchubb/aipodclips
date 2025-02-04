@@ -49,21 +49,25 @@ class VideoPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             video.snippets.isEmpty
-                ? ElevatedButton(
-                    onPressed: () async {
-                      final videoNotifier = context.read<VideoNotifier>();
-                      final response = await callGCF({
-                        'action': 'choose_snippets',
-                        'transcript': videoNotifier.video?.transcript?['text'],
-                      });
-                      FirebaseFirestore.instance
-                          .collection('videos')
-                          .doc(videoNotifier.video?.id)
-                          .update({'snippets': response['snippets']});
-                      videoNotifier.video
-                          ?.copyWith(snippets: response['snippets']);
-                    },
-                    child: const Text('Choose snippets'),
+                ? SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final videoNotifier = context.read<VideoNotifier>();
+                        final response = await callGCF({
+                          'action': 'choose_snippets',
+                          'transcript':
+                              videoNotifier.video?.transcript?['text'],
+                        });
+                        FirebaseFirestore.instance
+                            .collection('videos')
+                            .doc(videoNotifier.video?.id)
+                            .update({'snippets': response['snippets']});
+                        videoNotifier.video
+                            ?.copyWith(snippets: response['snippets']);
+                      },
+                      child: const Text('Choose snippets'),
+                    ),
                   )
                 : Column(
                     children: video.snippets.map((e) => Text(e)).toList(),
@@ -75,16 +79,39 @@ class VideoPage extends StatelessWidget {
   }
 }
 
-class NoTranscript extends StatelessWidget {
+class NoTranscript extends StatefulWidget {
   const NoTranscript({super.key});
+
+  @override
+  State<NoTranscript> createState() => _NoTranscriptState();
+}
+
+class _NoTranscriptState extends State<NoTranscript> {
+  bool isTranscribing = false;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {
-          MyNavigator.pushNamed('/transcribe');
+        onPressed: () async {
+          setState(() => isTranscribing = true);
+          final videoNotifier = context.read<VideoNotifier>();
+          final video = videoNotifier.video;
+          if (video == null) {
+            return;
+          }
+          final response = await callGCF({
+            'action': 'transcribe',
+            'url': video.storageUrl,
+          });
+          await FirebaseFirestore.instance
+              .collection('videos')
+              .doc(video.id)
+              .update({
+            'transcript': response,
+          });
+          videoNotifier.setVideo(video.copyWith(transcript: response));
         },
         child: const Text('Transcribe video'),
       ),
