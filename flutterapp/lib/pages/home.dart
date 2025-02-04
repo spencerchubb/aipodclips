@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
-          VideosList(),
+          VideoList(),
         ],
       ),
     );
@@ -106,8 +106,8 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class VideosList extends StatelessWidget {
-  const VideosList({super.key});
+class VideoList extends StatelessWidget {
+  const VideoList({super.key});
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -118,39 +118,85 @@ class VideosList extends StatelessWidget {
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
+          if (!snapshot.hasData) return const SizedBox.shrink();
           return ListView.builder(
             itemCount: snapshot.data?.docs.length,
             itemBuilder: (context, index) {
               final video = snapshot.data?.docs[index];
-              final title = video?['title'] ?? 'Error :(';
-              return InkWell(
-                onTap: () {
-                  if (video == null) return;
-                  context.read<VideoNotifier>().setVideo(Video.fromDoc(video));
-                  MyNavigator.pushNamed('/video');
-                },
-                child: Container(
-                  padding: const EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    top: 8,
-                    bottom: 8,
-                  ),
-                  // padding: const EdgeInsets.all
-                  decoration: BoxDecoration(
-                    border: index > 0
-                        ? Border(top: BorderSide(color: Colors.grey))
-                        : Border(),
-                  ),
-                  child: Text(
-                    title,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              );
+              return VideoCard(index: index, video: video);
             },
           );
-        },
+        }, 
+      ),
+    );
+  }
+}
+
+class VideoCard extends StatelessWidget {
+  const VideoCard({super.key, required this.index, required this.video});
+  final int index;
+  final QueryDocumentSnapshot? video;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = video?['title'] ?? 'Error :(';
+    return InkWell(
+      onTap: () {
+        if (video == null) return;
+        context.read<VideoNotifier>().setVideo(Video.fromDoc(video!));
+        MyNavigator.pushNamed('/video');
+      },
+      child: Container(
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 8,
+          bottom: 8,
+        ),
+        decoration: BoxDecoration(
+          border: index > 0
+              ? Border(top: BorderSide(color: Colors.grey))
+              : Border(),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(fontSize: 16),
+                overflow: TextOverflow.visible,
+                softWrap: true,
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                // Confirmation dialog
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Delete video'),
+                    content: Text('Are you sure you want to delete this video?\n\n$title'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          FirebaseFirestore.instance.collection('videos').doc(video?.id).delete();
+                          Navigator.pop(context);
+                        },
+                        child: Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.delete),
+            ),
+          ],
+        ),
       ),
     );
   }
