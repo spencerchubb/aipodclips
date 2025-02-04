@@ -1,10 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+List<String> castDynamicList(List<dynamic> list) {
+  return list.map((e) => e.toString()).toList();
+}
+
 class Video {
   final String id;
   final Timestamp createdAt;
   final String originalUrl;
   final String storageUrl;
+  final List<String> snippets;
   final String title;
   final Map<String, dynamic>? transcript;
   final String uid;
@@ -14,6 +19,7 @@ class Video {
     required this.createdAt,
     required this.originalUrl,
     required this.storageUrl,
+    required this.snippets,
     required this.title,
     this.transcript,
     required this.uid,
@@ -26,6 +32,7 @@ class Video {
       createdAt: json['createdAt'],
       originalUrl: json['originalUrl'],
       storageUrl: json['storageUrl'],
+      snippets: castDynamicList(json['snippets'] ?? []),
       title: json['title'],
       transcript: json['transcript'],
       uid: json['uid'],
@@ -37,6 +44,7 @@ class Video {
     Timestamp? createdAt,
     String? originalUrl,
     String? storageUrl,
+    List<String>? snippets,
     String? title,
     Map<String, dynamic>? transcript,
     String? uid,
@@ -46,6 +54,7 @@ class Video {
       createdAt: createdAt ?? this.createdAt,
       originalUrl: originalUrl ?? this.originalUrl,
       storageUrl: storageUrl ?? this.storageUrl,
+      snippets: snippets ?? this.snippets,
       title: title ?? this.title,
       transcript: transcript ?? this.transcript,
       uid: uid ?? this.uid,
