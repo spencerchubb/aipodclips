@@ -17,6 +17,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _urlController = TextEditingController();
   bool isDownloading = false;
+  String fetchVideoText = 'Fetch video';
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +31,9 @@ class _HomePageState extends State<HomePage> {
           children: [
             TextField(
               controller: _urlController,
+              onChanged: (value) {
+                setState(() => fetchVideoText = 'Fetch video');
+              },
               decoration: const InputDecoration(
                 labelText: 'Youtube URL',
                 border: OutlineInputBorder(),
@@ -40,7 +44,8 @@ class _HomePageState extends State<HomePage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  setState(() => isDownloading = true);
+                  if (fetchVideoText != 'Fetch video') return;
+                  setState(() => fetchVideoText = 'Fetching video... ⏳');
                   final originalUrl = _urlController.text;
                   final response = await callGCF({
                     'action': 'download',
@@ -55,9 +60,10 @@ class _HomePageState extends State<HomePage> {
                     'title': title,
                     'uid': FirebaseAuth.instance.currentUser?.uid,
                   });
+                  setState(() => fetchVideoText = 'Done fetching ✅');
                 },
                 child: Text(
-                  isDownloading ? 'Fetching video...' : 'Next',
+                  fetchVideoText,
                   style: TextStyle(fontSize: 16),
                 ),
               ),
