@@ -103,7 +103,7 @@ class _NoTranscriptState extends State<NoTranscript> {
           }
           final response = await callGCF({
             'action': 'transcribe',
-            'url': video.storageUrl,
+            'url': video.inputUrl,
           });
           await FirebaseFirestore.instance
               .collection('videos')

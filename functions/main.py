@@ -1,6 +1,7 @@
-from transcribe import transcribe_audio_in_chunks
+import fal_client
 from firebase_functions import https_fn, options
 from firebase_admin import credentials, initialize_app, storage
+import datetime
 import yt_dlp
 import tempfile
 import os
@@ -20,12 +21,7 @@ def api(req: https_fn.Request) -> https_fn.Response:
     elif body["action"] == "download":
         return download(body)
     elif body["action"] == "transcribe":
-        # Download from firebase storage to temp path
-        bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
-        blob = bucket.blob(f"videos/{body['url'].split('/')[-1]}")
-        temp_path = tempfile.NamedTemporaryFile(delete=False)
-        blob.download_to_filename(temp_path.name)
-        return transcribe_audio_in_chunks(temp_path.name)
+        return transcribe(body["url"])
     else:
         return {"message": "Unknown action!"}
 
@@ -78,7 +74,7 @@ def download(body):
                 video_path = f"{temp_dir}/{video_id}.{video_ext}"
                 
                 # Upload to Firebase Storage
-                blob = bucket.blob(f"videos/{video_id}.{video_ext}")
+                blob = bucket.blob(f"video_inputs/{video_id}.{video_ext}")
                 blob.upload_from_filename(video_path)
                 
                 return {
@@ -89,3 +85,40 @@ def download(body):
         except Exception as e:
             print(f"Error: {str(e)}")
             return {"message": f"Error downloading video: {str(e)}"}
+
+def transcribe(url):
+    video_id = url.split("/")[-1]
+    bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
+
+    # Get video
+    blob = bucket.blob(f"video_inputs/{video_id}")
+    signed_url = blob.generate_signed_url(expiration=datetime.timedelta(minutes=15))
+
+    # Generate transcript
+    transcript = fal_transcribe(signed_url)
+    
+    # Upload transcript
+    blob = bucket.blob(f"transcripts/{video_id}.json")
+    blob.upload_from_string(json.dumps(transcript))
+
+    return transcript
+
+def on_queue_update(update):
+    if isinstance(update, fal_client.InProgress):
+        for log in update.logs:
+           print(log["message"])
+
+def fal_transcribe(url):
+    result = fal_client.subscribe(
+        "fal-ai/whisper",
+        arguments={
+            "audio_url": url,
+            "task": "transcribe",
+            "language": "en",
+            "chunk_level": "word",
+            "version": "3"
+        },
+        with_logs=True,
+        on_queue_update=on_queue_update,
+    )
+    return result

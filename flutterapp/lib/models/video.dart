@@ -8,21 +8,21 @@ class Video {
   final String id;
   final Timestamp createdAt;
   final String originalUrl;
-  final String storageUrl;
+  final String inputUrl;
   final List<String> snippets;
   final String title;
-  final Map<String, dynamic>? transcript;
   final String uid;
+  final Map<String, dynamic>? transcript;
 
   Video({
     required this.id,
     required this.createdAt,
     required this.originalUrl,
-    required this.storageUrl,
+    required this.inputUrl,
     required this.snippets,
     required this.title,
-    this.transcript,
     required this.uid,
+    this.transcript,
   });
 
   factory Video.fromDoc(QueryDocumentSnapshot doc) {
@@ -31,10 +31,9 @@ class Video {
       id: doc.id,
       createdAt: json['createdAt'],
       originalUrl: json['originalUrl'],
-      storageUrl: json['storageUrl'],
+      inputUrl: json['inputUrl'],
       snippets: castDynamicList(json['snippets'] ?? []),
       title: json['title'],
-      transcript: json['transcript'],
       uid: json['uid'],
     );
   }
@@ -43,21 +42,21 @@ class Video {
     String? id,
     Timestamp? createdAt,
     String? originalUrl,
-    String? storageUrl,
+    String? inputUrl,
     List<String>? snippets,
     String? title,
-    Map<String, dynamic>? transcript,
     String? uid,
+    Map<String, dynamic>? transcript,
   }) {
     return Video(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       originalUrl: originalUrl ?? this.originalUrl,
-      storageUrl: storageUrl ?? this.storageUrl,
+      inputUrl: inputUrl ?? this.inputUrl,
       snippets: snippets ?? this.snippets,
       title: title ?? this.title,
-      transcript: transcript ?? this.transcript,
       uid: uid ?? this.uid,
+      transcript: transcript ?? this.transcript,
     );
   }
 }

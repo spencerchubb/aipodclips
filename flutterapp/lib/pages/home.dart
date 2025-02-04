@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../gcf.dart';
 import '../notifiers/video.dart';
 import '../models/video.dart';
@@ -66,12 +69,12 @@ class _HomePageState extends State<HomePage> {
                     return;
                   }
 
-                  final storageUrl = response['url'];
+                  final inputUrl = response['url'];
                   final title = response['title'];
                   FirebaseFirestore.instance.collection('videos').doc().set({
                     'createdAt': DateTime.now(),
                     'originalUrl': originalUrl,
-                    'storageUrl': storageUrl,
+                    'inputUrl': inputUrl,
                     'title': title,
                     'uid': FirebaseAuth.instance.currentUser?.uid,
                   });
@@ -122,28 +125,46 @@ class VideoList extends StatelessWidget {
           return ListView.builder(
             itemCount: snapshot.data?.docs.length,
             itemBuilder: (context, index) {
-              final video = snapshot.data?.docs[index];
-              return VideoCard(index: index, video: video);
+              final doc = snapshot.data?.docs[index];
+              return VideoCard(index: index, doc: doc);
             },
           );
-        }, 
+        },
       ),
     );
   }
 }
 
 class VideoCard extends StatelessWidget {
-  const VideoCard({super.key, required this.index, required this.video});
+  const VideoCard({super.key, required this.index, required this.doc});
   final int index;
-  final QueryDocumentSnapshot? video;
+  final QueryDocumentSnapshot? doc;
 
   @override
   Widget build(BuildContext context) {
-    final title = video?['title'] ?? 'Error :(';
+    final title = doc?['title'] ?? 'Error :(';
     return InkWell(
-      onTap: () {
-        if (video == null) return;
-        context.read<VideoNotifier>().setVideo(Video.fromDoc(video!));
+      onTap: () async {
+        if (doc == null) return;
+
+        final videoNotifier = context.read<VideoNotifier>();
+        Video video = Video.fromDoc(doc!);
+        final inputUrl = video.inputUrl;
+        final videoId = inputUrl.split('/').last;
+
+        try {
+          // Download transcript from firebase cloud storage
+          final downloadUrl = await FirebaseStorage.instance
+              .ref('transcripts/$videoId.json')
+              .getDownloadURL();
+          final transcript = await http.get(Uri.parse(downloadUrl));
+          final transcriptData = jsonDecode(transcript.body);
+          video = video.copyWith(transcript: transcriptData);
+        } catch (e) {
+          debugPrint(e.toString());
+        }
+
+        videoNotifier.setVideo(video);
         MyNavigator.pushNamed('/video');
       },
       child: Container(
@@ -176,7 +197,8 @@ class VideoCard extends StatelessWidget {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: Text('Delete video'),
-                    content: Text('Are you sure you want to delete this video?\n\n$title'),
+                    content: Text(
+                        'Are you sure you want to delete this video?\n\n$title'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
@@ -184,7 +206,10 @@ class VideoCard extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          FirebaseFirestore.instance.collection('videos').doc(video?.id).delete();
+                          FirebaseFirestore.instance
+                              .collection('videos')
+                              .doc(doc?.id)
+                              .delete();
                           Navigator.pop(context);
                         },
                         child: Text('Delete'),
