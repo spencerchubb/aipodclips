@@ -25,7 +25,7 @@ def api(req: https_fn.Request) -> https_fn.Response:
         blob = bucket.blob(f"videos/{body['url'].split('/')[-1]}")
         temp_path = tempfile.NamedTemporaryFile(delete=False)
         blob.download_to_filename(temp_path.name)
-        return transcribe_audio_in_chunks(temp_path.name, body['prompt'])
+        return transcribe_audio_in_chunks(temp_path.name)
     else:
         return {"message": "Unknown action!"}
 

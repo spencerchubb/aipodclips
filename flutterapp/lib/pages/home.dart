@@ -25,11 +25,11 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Home'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16),
+            child: TextField(
               controller: _urlController,
               onChanged: (value) {
                 setState(() => fetchVideoText = 'Fetch video');
@@ -39,8 +39,11 @@ class _HomePageState extends State<HomePage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16),
+            child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
@@ -68,17 +71,18 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-            Container(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Your Videos',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.only(left: 16, right: 16),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Your Videos',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            VideosList(),
-          ],
-        ),
+          ),
+          VideosList(),
+        ],
       ),
     );
   }
@@ -91,6 +95,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 class VideosList extends StatelessWidget {
+  const VideosList({super.key});
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -98,6 +103,7 @@ class VideosList extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('videos')
             .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           return ListView.builder(
@@ -105,17 +111,29 @@ class VideosList extends StatelessWidget {
             itemBuilder: (context, index) {
               final video = snapshot.data?.docs[index];
               final title = video?['title'] ?? 'Error :(';
-              return Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (video == null) return;
-                    context
-                        .read<VideoNotifier>()
-                        .setVideo(Video.fromDoc(video));
-                    MyNavigator.pushNamed('/video');
-                  },
-                  child: Text(title),
+              return InkWell(
+                onTap: () {
+                  if (video == null) return;
+                  context.read<VideoNotifier>().setVideo(Video.fromDoc(video));
+                  MyNavigator.pushNamed('/video');
+                },
+                child: Container(
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  // padding: const EdgeInsets.all
+                  decoration: BoxDecoration(
+                    border: index > 0
+                        ? Border(top: BorderSide(color: Colors.grey))
+                        : Border(),
+                  ),
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               );
             },

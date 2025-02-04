@@ -113,7 +113,7 @@ class _NoTranscriptState extends State<NoTranscript> {
           });
           videoNotifier.setVideo(video.copyWith(transcript: response));
         },
-        child: const Text('Transcribe video'),
+        child: Text(isTranscribing ? 'Transcribing... ⏳' : 'Transcribe'),
       ),
     );
   }
