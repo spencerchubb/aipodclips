@@ -1,14 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Video {
+  final String id;
   final Timestamp createdAt;
   final String originalUrl;
   final String storageUrl;
   final String title;
-  final String? transcript;
+  final Map<String, dynamic>? transcript;
   final String uid;
 
   Video({
+    required this.id,
     required this.createdAt,
     required this.originalUrl,
     required this.storageUrl,
@@ -17,15 +19,36 @@ class Video {
     required this.uid,
   });
 
-  factory Video.fromJson(Map<String, dynamic> json) {
+  factory Video.fromDoc(QueryDocumentSnapshot doc) {
+    final json = doc.data() as Map<String, dynamic>;
     return Video(
+      id: doc.id,
       createdAt: json['createdAt'],
       originalUrl: json['originalUrl'],
       storageUrl: json['storageUrl'],
       title: json['title'],
-      // transcript: json['transcript'],
-      transcript: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+      transcript: json['transcript'],
       uid: json['uid'],
+    );
+  }
+
+  Video copyWith({
+    String? id,
+    Timestamp? createdAt,
+    String? originalUrl,
+    String? storageUrl,
+    String? title,
+    Map<String, dynamic>? transcript,
+    String? uid,
+  }) {
+    return Video(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      originalUrl: originalUrl ?? this.originalUrl,
+      storageUrl: storageUrl ?? this.storageUrl,
+      title: title ?? this.title,
+      transcript: transcript ?? this.transcript,
+      uid: uid ?? this.uid,
     );
   }
 }

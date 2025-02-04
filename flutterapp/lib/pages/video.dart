@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../notifiers/video.dart';
 import '../navigator.dart';
+
 class VideoPage extends StatelessWidget {
   const VideoPage({super.key});
 
@@ -48,7 +49,9 @@ class NoTranscript extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          MyNavigator.pushNamed('/transcribe');
+        },
         child: const Text('Transcribe video'),
       ),
     );
@@ -72,7 +75,7 @@ class YesTranscript extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(8),
         child: Text(
-          video?.transcript ?? '',
+          video?.transcript?['text'] ?? '',
           overflow: TextOverflow.ellipsis,
           maxLines: 4,
         ),

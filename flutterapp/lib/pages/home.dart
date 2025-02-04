@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../gcf.dart';
-import '../navigator.dart';
 import '../notifiers/video.dart';
 import '../models/video.dart';
+import '../navigator.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,8 +15,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _urlController = TextEditingController(
-      text: 'https://youtu.be/gYqs-wUKZsM?si=7uq0bLbld__lYSQK');
+  final TextEditingController _urlController = TextEditingController();
   bool isDownloading = false;
 
   @override
@@ -56,7 +55,6 @@ class _HomePageState extends State<HomePage> {
                     'title': title,
                     'uid': FirebaseAuth.instance.currentUser?.uid,
                   });
-                  MyNavigator.pushNamed('/prompt');
                 },
                 child: Text(
                   isDownloading ? 'Fetching video...' : 'Next',
@@ -99,7 +97,7 @@ class VideosList extends StatelessWidget {
           return ListView.builder(
             itemCount: snapshot.data?.docs.length,
             itemBuilder: (context, index) {
-              final video = snapshot.data?.docs[index].data();
+              final video = snapshot.data?.docs[index];
               final title = video?['title'] ?? 'Error :(';
               return Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -108,7 +106,7 @@ class VideosList extends StatelessWidget {
                     if (video == null) return;
                     context
                         .read<VideoNotifier>()
-                        .setVideo(Video.fromJson(video));
+                        .setVideo(Video.fromDoc(video));
                     MyNavigator.pushNamed('/video');
                   },
                   child: Text(title),

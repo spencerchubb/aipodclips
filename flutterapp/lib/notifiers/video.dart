@@ -9,5 +9,9 @@ class VideoNotifier extends ChangeNotifier {
     this.video = video;
     notifyListeners();
   }
+
+  notify() {
+    notifyListeners();
+  }
 }
 

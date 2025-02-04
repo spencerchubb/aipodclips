@@ -1,8 +1,8 @@
+from transcribe import transcribe_audio_in_chunks
 from firebase_functions import https_fn, options
 from firebase_admin import credentials, initialize_app, storage
 import yt_dlp
 import tempfile
-
 app = initialize_app(credentials.Certificate("firebase_private_key.json"))
 
 @https_fn.on_request(cors=options.CorsOptions(cors_origins="*", cors_methods=["get", "post"]))
@@ -14,6 +14,13 @@ def api(req: https_fn.Request) -> https_fn.Response:
         return {"message": "Hello world!"}
     elif body["action"] == "download":
         return download(body)
+    elif body["action"] == "transcribe":
+        # Download from firebase storage to temp path
+        bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
+        blob = bucket.blob(f"videos/{body['url'].split('/')[-1]}")
+        temp_path = tempfile.NamedTemporaryFile(delete=False)
+        blob.download_to_filename(temp_path.name)
+        return transcribe_audio_in_chunks(temp_path.name, body['prompt'])
     else:
         return {"message": "Unknown action!"}
 
