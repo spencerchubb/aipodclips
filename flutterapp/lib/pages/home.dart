@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../gcf.dart';
 import '../navigator.dart';
+import '../notifiers/video.dart';
+import '../models/video.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -47,11 +50,11 @@ class _HomePageState extends State<HomePage> {
                   final storageUrl = response['url'];
                   final title = response['title'];
                   FirebaseFirestore.instance.collection('videos').doc().set({
-                    'uid': FirebaseAuth.instance.currentUser?.uid,
+                    'createdAt': DateTime.now(),
                     'originalUrl': originalUrl,
                     'storageUrl': storageUrl,
                     'title': title,
-                    'createdAt': DateTime.now(),
+                    'uid': FirebaseAuth.instance.currentUser?.uid,
                   });
                   MyNavigator.pushNamed('/prompt');
                 },
@@ -102,7 +105,11 @@ class VideosList extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: ElevatedButton(
                   onPressed: () {
-                    MyNavigator.pushNamed('/prompt');
+                    if (video == null) return;
+                    context
+                        .read<VideoNotifier>()
+                        .setVideo(Video.fromJson(video));
+                    MyNavigator.pushNamed('/video');
                   },
                   child: Text(title),
                 ),
