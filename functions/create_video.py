@@ -5,6 +5,7 @@ import cv2
 TARGET_W = 202
 TARGET_H = 360
 
+# TODO: Figure out why there is extra blank video at the end
 def create_video(input_video_path, output_video_path, transcript, snippet):
     start_time, end_time = calculate_times(transcript, snippet)
 
@@ -43,7 +44,7 @@ def create_video(input_video_path, output_video_path, transcript, snippet):
     
     # Combine all video clips
     video = mp.concatenate_videoclips(video_clips)
-    video.write_videofile(output_video_path)
+    video.write_videofile(output_video_path, codec="libx264")
 
 def calculate_times(transcript, snippet):
     snippet_remaining = snippet.strip()

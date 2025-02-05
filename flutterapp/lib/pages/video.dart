@@ -70,7 +70,18 @@ class VideoPage extends StatelessWidget {
                     ),
                   )
                 : Column(
-                    children: video.snippets.map((e) => Text(e)).toList(),
+                    children: video.snippets.map((snippet) {
+                      return InkWell(
+                        onTap: () async {
+                          callGCF({
+                            'action': 'create',
+                            'video_id': video.id,
+                            'snippet': snippet,
+                          });
+                        },
+                        child: Text(snippet),
+                      );
+                    }).toList(),
                   )
           ],
         ),

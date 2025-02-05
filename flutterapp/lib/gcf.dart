@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 Future<Map<String, dynamic>> callGCF(Map<String, dynamic> data) async {
   debugPrint(data.toString());
   final url = kDebugMode
-      ? 'http://127.0.0.1:5001/aipodclips-8369c/us-central1/api'
+      ? 'http://127.0.0.1:3000/api'
       : 'https://us-central1-aipodclips-8369c.cloudfunctions.net/api';
   final response = await http.post(
     Uri.parse(url),

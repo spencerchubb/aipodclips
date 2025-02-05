@@ -1,20 +1,23 @@
-import fal_client
-from firebase_functions import https_fn, options
+from flask import Flask, request
+from flask_cors import CORS
 from firebase_admin import credentials, initialize_app, storage
-from google.cloud import firestore
 import datetime
 import yt_dlp
 import tempfile
 import os
 import json
+import fal_client
 
 from create_video import create_video
 
-app = initialize_app(credentials.Certificate("firebase_private_key.json"))
+initialize_app(credentials.Certificate("firebase_private_key.json"))
 
-@https_fn.on_request(cors=options.CorsOptions(cors_origins="*", cors_methods=["get", "post"]))
-def api(req: https_fn.Request) -> https_fn.Response:
-    body = req.json
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/api', methods=['POST'])
+def api():
+    body = request.json
     print(body)
 
     if body["action"] == "hello":
@@ -58,29 +61,22 @@ def choose_snippets(body):
 
 def create(body):
     video_id = body["video_id"]
-    snippet_index = body["snippet_index"]
-
-    # Get video doc from firestore
-    db = firestore.client()
-    video_doc = db.collection("videos").document(video_id).get()
-    video_data = video_doc.to_dict()
-
-    # Get snippet
-    snippet = video_data["snippets"][snippet_index]
+    snippet = body["snippet"]
 
     with tempfile.TemporaryDirectory() as temp_dir:
         bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
-        input_path = f"{temp_dir}/input_{video_id}"
-        output_path = f"{temp_dir}/output_{video_id}"
+        input_path = f"{temp_dir}/input_{video_id}.mp4"
+        output_path = f"{temp_dir}/output_{video_id}.mp4"
 
         # Download video
-        blob = bucket.blob(f"video_inputs/{video_id}")
+        blob = bucket.blob(f"video_inputs/{video_id}.mp4")
         blob.download_to_filename(input_path)
 
         # Download transcript
         blob = bucket.blob(f"transcripts/{video_id}.json")
-        transcript = blob.download_to_filename(f"{temp_dir}/transcript_{video_id}.json")
-        transcript = json.load(open(transcript))
+        transcript_path = f"{temp_dir}/transcript_{video_id}.json"
+        transcript = blob.download_to_filename(transcript_path)
+        transcript = json.load(open(transcript_path))
 
         # Create video
         create_video(input_path, output_path, transcript, snippet)
@@ -122,7 +118,7 @@ def download(body):
                 
                 print("uploading to firebase")
                 # Upload to Firebase Storage
-                blob = bucket.blob(f"video_inputs/{video_id}")
+                blob = bucket.blob(f"video_inputs/{video_id}.mp4")
                 blob.upload_from_filename(video_path)
                 
                 return {
@@ -139,7 +135,7 @@ def transcribe(body):
     bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
 
     # Get video
-    blob = bucket.blob(f"video_inputs/{video_id}")
+    blob = bucket.blob(f"video_inputs/{video_id}.mp4")
     signed_url = blob.generate_signed_url(expiration=datetime.timedelta(minutes=15))
 
     # Generate transcript
