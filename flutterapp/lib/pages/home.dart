@@ -69,12 +69,12 @@ class _HomePageState extends State<HomePage> {
                     return;
                   }
 
-                  final inputUrl = response['url'];
                   final title = response['title'];
-                  FirebaseFirestore.instance.collection('videos').doc().set({
+                  final videoDoc = FirebaseFirestore.instance.collection('videos').doc();
+                  await videoDoc.set({
+                    'id': videoDoc.id,
                     'createdAt': DateTime.now(),
                     'originalUrl': originalUrl,
-                    'inputUrl': inputUrl,
                     'title': title,
                     'uid': FirebaseAuth.instance.currentUser?.uid,
                   });
@@ -149,8 +149,7 @@ class VideoCard extends StatelessWidget {
 
         final videoNotifier = context.read<VideoNotifier>();
         Video video = Video.fromDoc(doc!);
-        final inputUrl = video.inputUrl;
-        final videoId = inputUrl.split('/').last;
+        String videoId = video.id;
 
         try {
           // Download transcript from firebase cloud storage

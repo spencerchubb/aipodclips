@@ -1,11 +1,14 @@
 import fal_client
 from firebase_functions import https_fn, options
 from firebase_admin import credentials, initialize_app, storage
+from google.cloud import firestore
 import datetime
 import yt_dlp
 import tempfile
 import os
 import json
+
+from create_video import create_video
 
 app = initialize_app(credentials.Certificate("firebase_private_key.json"))
 
@@ -18,10 +21,12 @@ def api(req: https_fn.Request) -> https_fn.Response:
         return {"message": "Hello world!"}
     elif body["action"] == "choose_snippets":
         return choose_snippets(body)
+    elif body["action"] == "create":
+        return create(body)
     elif body["action"] == "download":
         return download(body)
     elif body["action"] == "transcribe":
-        return transcribe(body["url"])
+        return transcribe(body)
     else:
         return {"message": "Unknown action!"}
 
@@ -51,30 +56,73 @@ def choose_snippets(body):
         "snippets": json.loads(response)
     }
 
+def create(body):
+    video_id = body["video_id"]
+    snippet_index = body["snippet_index"]
+
+    # Get video doc from firestore
+    db = firestore.client()
+    video_doc = db.collection("videos").document(video_id).get()
+    video_data = video_doc.to_dict()
+
+    # Get snippet
+    snippet = video_data["snippets"][snippet_index]
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
+        input_path = f"{temp_dir}/input_{video_id}"
+        output_path = f"{temp_dir}/output_{video_id}"
+
+        # Download video
+        blob = bucket.blob(f"video_inputs/{video_id}")
+        blob.download_to_filename(input_path)
+
+        # Download transcript
+        blob = bucket.blob(f"transcripts/{video_id}.json")
+        transcript = blob.download_to_filename(f"{temp_dir}/transcript_{video_id}.json")
+        transcript = json.load(open(transcript))
+
+        # Create video
+        create_video(input_path, output_path, transcript, snippet)
+
+        # Upload video to firebase storage
+        blob = bucket.blob(f"video_outputs/{video_id}")
+        blob.upload_from_filename(output_path)
+
+        return {"message": "Video created successfully"}
+
 def download(body):
     url = body["url"]
     
     # Initialize Firebase Storage bucket
+    print("making bucket")
     bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
     
+    print("making temp dir")
     # Create a temporary directory to store the download
     with tempfile.TemporaryDirectory() as temp_dir:
         ydl_opts = {
             'format': 'best',
             'outtmpl': f'{temp_dir}/%(id)s.%(ext)s',
+            'nocheckcertificate': True,
+            'no_cache_dir': True,
+            'no_mtime': True,  # Prevents timestamp modification
+            'noprogress': True,  # Reduces output noise
         }
         
         try:
+            print("making YoutubeDL")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 # Download the video
+                print("downloading video")
                 info = ydl.extract_info(url, download=True)
                 video_id = info['id']
-                video_ext = info['ext']
                 video_title = info['title']
-                video_path = f"{temp_dir}/{video_id}.{video_ext}"
+                video_path = f"{temp_dir}/{video_id}"
                 
+                print("uploading to firebase")
                 # Upload to Firebase Storage
-                blob = bucket.blob(f"video_inputs/{video_id}.{video_ext}")
+                blob = bucket.blob(f"video_inputs/{video_id}")
                 blob.upload_from_filename(video_path)
                 
                 return {
@@ -83,11 +131,11 @@ def download(body):
                     "title": video_title,
                 }
         except Exception as e:
-            print(f"Error: {str(e)}")
+            print(f"YouTube DL Error: {str(e)}")
             return {"message": f"Error downloading video: {str(e)}"}
 
-def transcribe(url):
-    video_id = url.split("/")[-1]
+def transcribe(body):
+    video_id = body["video_id"]
     bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
 
     # Get video

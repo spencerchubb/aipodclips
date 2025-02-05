@@ -8,7 +8,6 @@ class Video {
   final String id;
   final Timestamp createdAt;
   final String originalUrl;
-  final String inputUrl;
   final List<String> snippets;
   final String title;
   final String uid;
@@ -18,7 +17,6 @@ class Video {
     required this.id,
     required this.createdAt,
     required this.originalUrl,
-    required this.inputUrl,
     required this.snippets,
     required this.title,
     required this.uid,
@@ -31,7 +29,6 @@ class Video {
       id: doc.id,
       createdAt: json['createdAt'],
       originalUrl: json['originalUrl'],
-      inputUrl: json['inputUrl'],
       snippets: castDynamicList(json['snippets'] ?? []),
       title: json['title'],
       uid: json['uid'],
@@ -42,7 +39,6 @@ class Video {
     String? id,
     Timestamp? createdAt,
     String? originalUrl,
-    String? inputUrl,
     List<String>? snippets,
     String? title,
     String? uid,
@@ -52,7 +48,6 @@ class Video {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       originalUrl: originalUrl ?? this.originalUrl,
-      inputUrl: inputUrl ?? this.inputUrl,
       snippets: snippets ?? this.snippets,
       title: title ?? this.title,
       uid: uid ?? this.uid,
