@@ -59,9 +59,11 @@ class _HomePageState extends State<HomePage> {
                   if (fetchVideoText != 'Fetch video') return;
                   setState(() => fetchVideoText = 'Fetching video... ⏳');
                   final originalUrl = _urlController.text;
+                  final videoDoc = FirebaseFirestore.instance.collection('videos').doc();
                   final response = await callGCF({
                     'action': 'download',
                     'url': originalUrl,
+                    'video_id': videoDoc.id,
                   });
 
                   if (response['message'].contains('not a valid URL')) {
@@ -70,7 +72,6 @@ class _HomePageState extends State<HomePage> {
                   }
 
                   final title = response['title'];
-                  final videoDoc = FirebaseFirestore.instance.collection('videos').doc();
                   await videoDoc.set({
                     'id': videoDoc.id,
                     'createdAt': DateTime.now(),

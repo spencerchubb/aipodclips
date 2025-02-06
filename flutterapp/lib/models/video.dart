@@ -8,7 +8,7 @@ class Video {
   final String id;
   final Timestamp createdAt;
   final String originalUrl;
-  final List<String> snippets;
+  final List<dynamic> snippets;
   final String title;
   final String uid;
   final Map<String, dynamic>? transcript;

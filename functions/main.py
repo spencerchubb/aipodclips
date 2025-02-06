@@ -89,6 +89,7 @@ def create(body):
 
 def download(body):
     url = body["url"]
+    video_id = body["video_id"]
     
     # Initialize Firebase Storage bucket
     print("making bucket")
@@ -112,9 +113,8 @@ def download(body):
                 # Download the video
                 print("downloading video")
                 info = ydl.extract_info(url, download=True)
-                video_id = info['id']
                 video_title = info['title']
-                video_path = f"{temp_dir}/{video_id}"
+                video_path = f"{temp_dir}/{info['id']}.{info['ext']}"
                 
                 print("uploading to firebase")
                 # Upload to Firebase Storage

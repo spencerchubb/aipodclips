@@ -6,7 +6,7 @@
   "functions": {
     "source": "functions",
     "runtime": "python312",
-    "virtualenv": ".venv"
+    "virtualenv": "venv"
   },
   "emulators": {
     "functions": {

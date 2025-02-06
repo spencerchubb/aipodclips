@@ -63,8 +63,8 @@ class VideoPage extends StatelessWidget {
                             .collection('videos')
                             .doc(videoNotifier.video?.id)
                             .update({'snippets': response['snippets']});
-                        videoNotifier.video
-                            ?.copyWith(snippets: response['snippets']);
+                        final snippets = (response['snippets'] as List<dynamic>).map((e) => e.toString()).toList();
+                        videoNotifier.setVideo(videoNotifier.video?.copyWith(snippets: snippets));
                       },
                       child: const Text('Choose snippets'),
                     ),
@@ -115,12 +115,6 @@ class _NoTranscriptState extends State<NoTranscript> {
           final response = await callGCF({
             'action': 'transcribe',
             'video_id': video.id,
-          });
-          await FirebaseFirestore.instance
-              .collection('videos')
-              .doc(video.id)
-              .update({
-            'transcript': response,
           });
           videoNotifier.setVideo(video.copyWith(transcript: response));
         },
