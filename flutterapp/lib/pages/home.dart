@@ -164,6 +164,16 @@ class VideoCard extends StatelessWidget {
           debugPrint(e.toString());
         }
 
+        for (var i = 0; i < video.snippets.length; i++) {
+          final snippet = video.snippets[i];
+          if (snippet.id != null) {
+            final downloadUrl = await FirebaseStorage.instance
+                .ref('video_outputs/${snippet.id}.mp4')
+                .getDownloadURL();
+            video.snippets[i].url = downloadUrl;
+          }
+        }
+
         videoNotifier.setVideo(video);
         MyNavigator.pushNamed('/video');
       },

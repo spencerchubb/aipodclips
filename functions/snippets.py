@@ -51,13 +51,13 @@ def parse_snippets(llm_response, transcript_text):
     for snippet in snippets:
         # Even though we tell the LLM to copy lines verbatim, it sometimes doesn't!
         sentence_index = find_closest_match(snippet, sentences)
-        snippet = ""
+        snippet = sentences[sentence_index]
 
         # Add sentences until the snippet is at least 30 seconds of audio.
         # Our estimate assumes 150 words per minute, 0.5 minutes per snippet, 5 characters per word.
         min_length = 150 * 0.5 * 5
-        while len(snippet) < min_length and sentence_index < len(sentences):
-            snippet += " " + sentences[sentence_index]
+        while len(snippet) < min_length and sentence_index < len(sentences) - 1:
             sentence_index += 1
-        output.append(snippet)
+            snippet += " " + sentences[sentence_index]
+        output.append({ "text": snippet })
     return output

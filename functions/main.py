@@ -5,7 +5,7 @@ import datetime
 import yt_dlp
 import tempfile
 import json
-
+import uuid
 from create_video import create_video
 from snippets import generate_snippets
 initialize_app(credentials.Certificate("firebase_private_key.json"))
@@ -54,10 +54,11 @@ def create(body):
         create_video(input_path, output_path, transcript, snippet)
 
         # Upload video to firebase storage
-        blob = bucket.blob(f"video_outputs/{video_id}")
+        snippet_id = str(uuid.uuid4())
+        blob = bucket.blob(f"video_outputs/{snippet_id}.mp4")
         blob.upload_from_filename(output_path)
 
-        return {"message": "Video created successfully"}
+        return {"snippet_id": snippet_id}
 
 def download(body):
     url = body["url"]

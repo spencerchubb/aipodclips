@@ -1,14 +1,48 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-List<String> castDynamicList(List<dynamic> list) {
-  return list.map((e) => e.toString()).toList();
+class Snippet {
+  String? id;
+  String text;
+  String? url;
+
+  Snippet({
+    this.id,
+    required this.text,
+    this.url,
+  });
+
+  factory Snippet.fromJson(Map<String, dynamic> json) {
+    return Snippet(
+      id: json['id'],
+      text: json['text'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'text': text,
+    };
+  }
+
+  Snippet copyWith({
+    String? id,
+    String? text,
+    String? url,
+  }) {
+    return Snippet(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      url: url ?? this.url,
+    );
+  }
 }
 
 class Video {
   final String id;
   final Timestamp createdAt;
   final String originalUrl;
-  final List<dynamic> snippets;
+  final List<Snippet> snippets;
   final String title;
   final String uid;
   final Map<String, dynamic>? transcript;
@@ -29,7 +63,9 @@ class Video {
       id: doc.id,
       createdAt: json['createdAt'],
       originalUrl: json['originalUrl'],
-      snippets: castDynamicList(json['snippets'] ?? []),
+      snippets: (json['snippets'] ?? [])
+          .map<Snippet>((e) => Snippet.fromJson(e))
+          .toList(),
       title: json['title'],
       uid: json['uid'],
     );
@@ -39,7 +75,7 @@ class Video {
     String? id,
     Timestamp? createdAt,
     String? originalUrl,
-    List<String>? snippets,
+    List<Snippet>? snippets,
     String? title,
     String? uid,
     Map<String, dynamic>? transcript,
