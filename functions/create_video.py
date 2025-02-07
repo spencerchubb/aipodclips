@@ -10,7 +10,7 @@ def create_video(input_video_path, output_video_path, transcript, snippet):
     start_time, end_time = calculate_times(transcript, snippet)
 
     # Get chunks within the start and end time
-    chunks = [chunk for chunk in transcript["chunks"] if chunk["timestamp"][0] >= start_time and chunk["timestamp"][1] <= end_time]
+    chunks = [chunk for chunk in transcript["words"] if chunk["start"] >= start_time and chunk["end"] <= end_time]
 
     lines = build_lines(chunks)
     
@@ -50,14 +50,14 @@ def calculate_times(transcript, snippet):
     snippet_remaining = snippet.strip()
     start_time = None
     end_time = None
-    for chunk in transcript["chunks"]:
+    for chunk in transcript["words"]:
         chunk_text = chunk["text"].strip()
         if snippet_remaining.startswith(chunk_text):
             # print(f"Found: {chunk_text}, remaining: {snippet_remaining[:20]}")
-            start_time = start_time or chunk["timestamp"][0]
+            start_time = start_time or chunk["start"]
             snippet_remaining = snippet_remaining[len(chunk_text):].strip()
             if snippet_remaining == "":
-                end_time = chunk["timestamp"][1]
+                end_time = chunk["end"]
                 break
         else:
             # Reset
@@ -74,7 +74,7 @@ def build_lines(chunks):
         if len(lines) > 0 and len(lines[-1]["line"]) + len(chunk_text) <= max_len:
             lines[-1]["line"] += " " + chunk_text
         else:
-            lines.append({ "line": chunk_text, "timestamp": chunk["timestamp"][0] })
+            lines.append({ "line": chunk_text, "timestamp": chunk["start"] })
     return lines
 
 def fit_to_16_9(x, y, w, h, max_x, max_y):

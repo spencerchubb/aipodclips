@@ -92,10 +92,8 @@ def download(body):
     video_id = body["video_id"]
     
     # Initialize Firebase Storage bucket
-    print("making bucket")
     bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
     
-    print("making temp dir")
     # Create a temporary directory to store the download
     with tempfile.TemporaryDirectory() as temp_dir:
         ydl_opts = {
@@ -108,7 +106,6 @@ def download(body):
         }
         
         try:
-            print("making YoutubeDL")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 # Download the video
                 print("downloading video")
@@ -139,7 +136,7 @@ def transcribe(body):
     signed_url = blob.generate_signed_url(expiration=datetime.timedelta(minutes=15))
 
     # Generate transcript
-    transcript = fal_transcribe(signed_url)
+    transcript = fireworks_transcribe(signed_url)
     
     # Upload transcript
     blob = bucket.blob(f"transcripts/{video_id}.json")
@@ -147,22 +144,20 @@ def transcribe(body):
 
     return transcript
 
-def on_queue_update(update):
-    if isinstance(update, fal_client.InProgress):
-        for log in update.logs:
-           print(log["message"])
+def fireworks_transcribe(url):
+    from fireworks.client.audio import AudioInference
 
-def fal_transcribe(url):
-    result = fal_client.subscribe(
-        "fal-ai/whisper",
-        arguments={
-            "audio_url": url,
-            "task": "transcribe",
-            "language": "en",
-            "chunk_level": "word",
-            "version": "3"
-        },
-        with_logs=True,
-        on_queue_update=on_queue_update,
+    # Prepare client
+    client = AudioInference(
+        model="whisper-v3",
+        base_url="https://audio-prod.us-virginia-1.direct.fireworks.ai",
     )
+
+    print("transcribing audio")
+    result = client.transcribe(
+        audio=url, 
+        language="en",
+        response_format="verbose_json",
+        timestamp_granularities=["word"],
+    ).model_dump()
     return result
