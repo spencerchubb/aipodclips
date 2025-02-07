@@ -207,7 +207,7 @@ class _ClipMadeState extends State<ClipMade> {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        _controller.play();
+        MyNavigator.pushNamed('/video_player');
       },
       child: Row(
         children: [

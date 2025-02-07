@@ -1,6 +1,7 @@
 __pycache__/
 venv/
 firebase_private_key.json
+.DS_Store
 
 # Logs
 logs

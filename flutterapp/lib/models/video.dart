@@ -46,6 +46,7 @@ class Video {
   final String title;
   final String uid;
   final Map<String, dynamic>? transcript;
+  final int currentSnippetIndex;
 
   Video({
     required this.id,
@@ -55,6 +56,7 @@ class Video {
     required this.title,
     required this.uid,
     this.transcript,
+    this.currentSnippetIndex = 0,
   });
 
   factory Video.fromDoc(QueryDocumentSnapshot doc) {
@@ -79,6 +81,7 @@ class Video {
     String? title,
     String? uid,
     Map<String, dynamic>? transcript,
+    int? currentSnippetIndex,
   }) {
     return Video(
       id: id ?? this.id,
@@ -88,6 +91,7 @@ class Video {
       title: title ?? this.title,
       uid: uid ?? this.uid,
       transcript: transcript ?? this.transcript,
+      currentSnippetIndex: currentSnippetIndex ?? this.currentSnippetIndex,
     );
   }
 }
