@@ -9,6 +9,9 @@
 		<true/>
 	</dict>
 
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need access to save videos to your library</string>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

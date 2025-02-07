@@ -4,8 +4,10 @@ import 'package:chewie/chewie.dart';
 import '../models/video.dart';
 import 'package:provider/provider.dart';
 import '../notifiers/video.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
-// TODO: export and share video
 class VideoPlayerPage extends StatefulWidget {
   const VideoPlayerPage({super.key});
 
@@ -23,7 +25,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void initState() {
     super.initState();
     _videoNotifier = context.read<VideoNotifier>();
-    _snippet = _videoNotifier.video?.snippets[_videoNotifier.video?.currentSnippetIndex ?? 0] ?? Snippet(text: '');
+    _snippet = _videoNotifier
+            .video?.snippets[_videoNotifier.video?.currentSnippetIndex ?? 0] ??
+        Snippet(text: '');
     _initializePlayer();
   }
 
@@ -31,23 +35,16 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _videoPlayerController = VideoPlayerController.networkUrl(
       Uri.parse(_snippet.url!),
     );
-    
+
     await _videoPlayerController.initialize();
-    
+
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController,
-      aspectRatio: 9/16, // Maintain your original aspect ratio
+      aspectRatio: 9 / 16,
       autoPlay: true,
       looping: true,
-      // You can add more options here like:
-      // materialProgressColors: ChewieProgressColors(
-      //   playedColor: Colors.red,
-      //   handleColor: Colors.blue,
-      //   backgroundColor: Colors.grey,
-      //   bufferedColor: Colors.lightGreen,
-      // ),
     );
-    
+
     setState(() {});
   }
 
@@ -58,19 +55,73 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     super.dispose();
   }
 
+  Future<void> handleCopy(String url) async {
+    Clipboard.setData(ClipboardData(text: url));
+    Fluttertoast.showToast(
+      msg: 'Copied URL ✅',
+      gravity: ToastGravity.CENTER,
+      backgroundColor: CupertinoColors.darkBackgroundGray,
+      textColor: CupertinoColors.systemGrey4,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    bool videoInited = _chewieController != null &&
+        _chewieController!.videoPlayerController.value.isInitialized;
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: Text(_videoNotifier.video?.title ?? ''),
+      backgroundColor: CupertinoColors.darkBackgroundGray,
+      child: DefaultTextStyle(
+        style: const TextStyle(), // Prevents yellow underline
+        child: SafeArea(
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Icon(
+                      CupertinoIcons.chevron_left,
+                      size: 28,
+                      color: CupertinoColors.systemGrey4,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      _videoNotifier.video?.title ?? '',
+                      style: const TextStyle(
+                        color: CupertinoColors.systemGrey4,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  CupertinoButton(
+                    onPressed: () => handleCopy(_snippet.url!),
+                    child: const Icon(
+                      Icons.copy,
+                      size: 28,
+                      color: CupertinoColors.systemGrey4,
+                    ),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: videoInited
+                    ? Chewie(
+                        controller: _chewieController!,
+                      )
+                    : const Center(
+                        child: CupertinoActivityIndicator(
+                          color: CupertinoColors.white,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: _chewieController != null && _chewieController!.videoPlayerController.value.isInitialized
-          ? Chewie(
-              controller: _chewieController!,
-            )
-          : const Center(
-              child: CupertinoActivityIndicator(),
-            ),
     );
   }
 }
