@@ -45,7 +45,7 @@ class Video {
   final List<Snippet> snippets;
   final String title;
   final String uid;
-  final Map<String, dynamic>? transcript;
+  final String? transcriptText;
   final int currentSnippetIndex;
 
   Video({
@@ -55,7 +55,7 @@ class Video {
     required this.snippets,
     required this.title,
     required this.uid,
-    this.transcript,
+    this.transcriptText,
     this.currentSnippetIndex = 0,
   });
 
@@ -69,6 +69,7 @@ class Video {
           .map<Snippet>((e) => Snippet.fromJson(e))
           .toList(),
       title: json['title'],
+      transcriptText: json['transcriptText'],
       uid: json['uid'],
     );
   }
@@ -80,7 +81,7 @@ class Video {
     List<Snippet>? snippets,
     String? title,
     String? uid,
-    Map<String, dynamic>? transcript,
+    String? transcriptText,
     int? currentSnippetIndex,
   }) {
     return Video(
@@ -90,7 +91,7 @@ class Video {
       snippets: snippets ?? this.snippets,
       title: title ?? this.title,
       uid: uid ?? this.uid,
-      transcript: transcript ?? this.transcript,
+      transcriptText: transcriptText ?? this.transcriptText,
       currentSnippetIndex: currentSnippetIndex ?? this.currentSnippetIndex,
     );
   }

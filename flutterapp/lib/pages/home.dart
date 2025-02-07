@@ -3,8 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../gcf.dart';
 import '../notifiers/video.dart';
 import '../models/video.dart';
@@ -150,19 +148,6 @@ class VideoCard extends StatelessWidget {
 
         final videoNotifier = context.read<VideoNotifier>();
         Video video = Video.fromDoc(doc!);
-        String videoId = video.id;
-
-        try {
-          // Download transcript from firebase cloud storage
-          final downloadUrl = await FirebaseStorage.instance
-              .ref('transcripts/$videoId.json')
-              .getDownloadURL();
-          final transcript = await http.get(Uri.parse(downloadUrl));
-          final transcriptData = jsonDecode(transcript.body);
-          video = video.copyWith(transcript: transcriptData);
-        } catch (e) {
-          debugPrint(e.toString());
-        }
 
         for (var i = 0; i < video.snippets.length; i++) {
           final snippet = video.snippets[i];

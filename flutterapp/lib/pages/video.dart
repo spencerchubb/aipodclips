@@ -37,7 +37,7 @@ class VideoPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              video.transcript == null
+              video.transcriptText == null
                   ? const NoTranscript()
                   : const YesTranscript(),
               const SizedBox(height: 30),
@@ -61,7 +61,7 @@ class VideoPage extends StatelessWidget {
                           final response = await callGCF({
                             'action': 'generate_snippets',
                             'transcript':
-                                videoNotifier.video?.transcript?['text'],
+                                videoNotifier.video?.transcriptText,
                           });
                           FirebaseFirestore.instance
                               .collection('videos')
@@ -119,7 +119,10 @@ class _NoTranscriptState extends State<NoTranscript> {
             'action': 'transcribe',
             'video_id': video.id,
           });
-          videoNotifier.setVideo(video.copyWith(transcript: response));
+          FirebaseFirestore.instance.collection('videos').doc(video.id).update({
+            'transcriptText': response['text'],
+          });
+          videoNotifier.setVideo(video.copyWith(transcriptText: response['text']));
         },
         child: Text(isTranscribing ? 'Transcribing... ⏳' : 'Transcribe'),
       ),
@@ -144,7 +147,7 @@ class YesTranscript extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(8),
         child: Text(
-          video?.transcript?['text'] ?? '',
+          video?.transcriptText ?? '',
           overflow: TextOverflow.ellipsis,
           maxLines: 4,
         ),
