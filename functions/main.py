@@ -4,12 +4,10 @@ from firebase_admin import credentials, initialize_app, storage
 import datetime
 import yt_dlp
 import tempfile
-import os
 import json
-import fal_client
 
 from create_video import create_video
-
+from snippets import generate_snippets
 initialize_app(credentials.Certificate("firebase_private_key.json"))
 
 app = Flask(__name__)
@@ -22,42 +20,16 @@ def api():
 
     if body["action"] == "hello":
         return {"message": "Hello world!"}
-    elif body["action"] == "choose_snippets":
-        return choose_snippets(body)
     elif body["action"] == "create":
         return create(body)
     elif body["action"] == "download":
         return download(body)
+    elif body["action"] == "generate_snippets":
+        return generate_snippets(body)
     elif body["action"] == "transcribe":
         return transcribe(body)
     else:
         return {"message": "Unknown action!"}
-
-def choose_snippets(body):
-    import google.generativeai as genai
-
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    prompt = '''You are an expert at psychology and social media virality, especially for short form video. The user will give you a transcript of a podcast. Choose snippets of about 15 to 30 seconds that would go viral and make people want to watch the whole podcast. Output the options as a list of strings. Do not say anything else. Choose 3 options
-
-### Example output format
-["snippet 1", "snippet 2", "snippet 3"]'''
-    generation_config = {
-        "temperature": 1,
-        "top_p": 0.95,
-        "top_k": 40,
-        "max_output_tokens": 8192,
-        "response_mime_type": "text/plain",
-    }
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash-exp",
-        generation_config=generation_config,
-        system_instruction=prompt,
-    )
-    chat_session = model.start_chat(history=[])
-    response = chat_session.send_message(body["transcript"]).text
-    return {
-        "snippets": json.loads(response)
-    }
 
 def create(body):
     video_id = body["video_id"]

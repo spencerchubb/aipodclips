@@ -55,7 +55,7 @@ class VideoPage extends StatelessWidget {
                       onPressed: () async {
                         final videoNotifier = context.read<VideoNotifier>();
                         final response = await callGCF({
-                          'action': 'choose_snippets',
+                          'action': 'generate_snippets',
                           'transcript':
                               videoNotifier.video?.transcript?['text'],
                         });
@@ -66,7 +66,7 @@ class VideoPage extends StatelessWidget {
                         final snippets = (response['snippets'] as List<dynamic>).map((e) => e.toString()).toList();
                         videoNotifier.setVideo(videoNotifier.video?.copyWith(snippets: snippets));
                       },
-                      child: const Text('Choose snippets'),
+                      child: const Text('Generate snippets'),
                     ),
                   )
                 : Column(

@@ -51,7 +51,7 @@ def calculate_times(transcript, snippet):
     start_time = None
     end_time = None
     for chunk in transcript["words"]:
-        chunk_text = chunk["text"].strip()
+        chunk_text = chunk["word"].strip()
         if snippet_remaining.startswith(chunk_text):
             # print(f"Found: {chunk_text}, remaining: {snippet_remaining[:20]}")
             start_time = start_time or chunk["start"]
@@ -70,7 +70,7 @@ def build_lines(chunks):
     max_len = 20
     lines = []
     for chunk in chunks:
-        chunk_text = chunk["text"].strip()
+        chunk_text = chunk["word"].strip()
         if len(lines) > 0 and len(lines[-1]["line"]) + len(chunk_text) <= max_len:
             lines[-1]["line"] += " " + chunk_text
         else:
