@@ -7,6 +7,8 @@ import '../gcf.dart';
 import '../notifiers/video.dart';
 import '../models/video.dart';
 import '../navigator.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -57,7 +59,8 @@ class _HomePageState extends State<HomePage> {
                   if (fetchVideoText != 'Fetch video') return;
                   setState(() => fetchVideoText = 'Fetching video... ⏳');
                   final originalUrl = _urlController.text;
-                  final videoDoc = FirebaseFirestore.instance.collection('videos').doc();
+                  final videoDoc =
+                      FirebaseFirestore.instance.collection('videos').doc();
                   final response = await callGCF({
                     'action': 'download',
                     'url': originalUrl,
@@ -83,6 +86,43 @@ class _HomePageState extends State<HomePage> {
                   fetchVideoText,
                   style: TextStyle(fontSize: 16),
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.only(left: 16, right: 16),
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                FilePickerResult? result = await FilePicker.platform.pickFiles(
+                  type: FileType.video,
+                  allowMultiple: false,
+                );
+
+                if (result != null) {
+                  File file = File(result.files.single.path!);
+                  // Upload video to firebase storage
+                  final videoDoc =
+                      FirebaseFirestore.instance.collection('videos').doc();
+                  debugPrint('Uploading video to firebase storage');
+                  await FirebaseStorage.instance
+                      .ref('video_inputs')
+                      .child('${videoDoc.id}.mp4')
+                      .putFile(file);
+                  debugPrint('Saving video data to firestore');
+                  await videoDoc.set({
+                    'id': videoDoc.id,
+                    'createdAt': DateTime.now(),
+                    'originalUrl': file.path,
+                    'title': videoDoc.id,
+                    'uid': FirebaseAuth.instance.currentUser?.uid,
+                  });
+                }
+              },
+              child: const Text(
+                'Upload video',
+                style: TextStyle(fontSize: 16),
               ),
             ),
           ),

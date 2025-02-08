@@ -6,6 +6,7 @@ Future<Map<String, dynamic>> callGCF(Map<String, dynamic> data) async {
   debugPrint(data.toString());
   final url = kDebugMode
       ? 'http://127.0.0.1:3000/api'
+      // ? 'http://157.245.221.230:3000/api'
       : 'https://us-central1-aipodclips-8369c.cloudfunctions.net/api';
   final response = await http.post(
     Uri.parse(url),
