@@ -6,6 +6,7 @@ import '../notifiers/video.dart';
 import '../navigator.dart';
 import '../models/video.dart';
 import 'package:video_player/video_player.dart';
+import '../widgets/custom_button.dart';
 
 class VideoPage extends StatelessWidget {
   const VideoPage({super.key});
@@ -55,7 +56,7 @@ class VideoPage extends StatelessWidget {
               video.snippets.isEmpty
                   ? SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: CustomButton(
                         onPressed: () async {
                           final videoNotifier = context.read<VideoNotifier>();
                           final response = await callGCF({
@@ -74,7 +75,7 @@ class VideoPage extends StatelessWidget {
                           videoNotifier.setVideo(videoNotifier.video
                               ?.copyWith(snippets: snippets));
                         },
-                        child: const Text('Generate clips'),
+                        text: 'Generate clips',
                       ),
                     )
                   : Column(
@@ -107,7 +108,7 @@ class _NoTranscriptState extends State<NoTranscript> {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: CustomButton(
         onPressed: () async {
           setState(() => isTranscribing = true);
           final videoNotifier = context.read<VideoNotifier>();
@@ -124,7 +125,7 @@ class _NoTranscriptState extends State<NoTranscript> {
           });
           videoNotifier.setVideo(video.copyWith(transcriptText: response['text']));
         },
-        child: Text(isTranscribing ? 'Transcribing... ⏳' : 'Transcribe'),
+        text: isTranscribing ? 'Transcribing... ⏳' : 'Transcribe',
       ),
     );
   }

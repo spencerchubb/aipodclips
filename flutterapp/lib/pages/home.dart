@@ -3,12 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
-import '../gcf.dart';
 import '../notifiers/video.dart';
 import '../models/video.dart';
 import '../navigator.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import '../widgets/custom_button.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
+              child: CustomButton(
                 onPressed: () async {
                   FilePickerResult? result = await FilePicker.platform.pickFiles(
                     type: FileType.video,
@@ -63,28 +63,8 @@ class _HomePageState extends State<HomePage> {
                     });
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Theme.of(context).primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.upload, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Upload New Video',
-                      style: TextStyle(
-                        fontSize: 16, 
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                text: 'Upload New Video',
+                icon: Icons.upload,
               ),
             ),
           ],
