@@ -18,132 +18,83 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _urlController = TextEditingController();
-  bool isDownloading = false;
-  String fetchVideoText = 'Fetch video';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            // Top padding avoids label being cut off
-            padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
-            child: TextField(
-              controller: _urlController,
-              onChanged: (value) {
-                setState(() => fetchVideoText = 'Fetch video');
-              },
-              decoration: const InputDecoration(
-                labelText: 'Youtube URL',
-                border: OutlineInputBorder(),
+      body: SafeArea(
+        child: Column(
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.only(left: 16, right: 16),
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                'Your Videos',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16),
-            child: SizedBox(
+            const VideoList(),
+            Container(
               width: double.infinity,
+              padding: const EdgeInsets.all(16),
               child: ElevatedButton(
                 onPressed: () async {
-                  if (_urlController.text.isEmpty) {
-                    setState(() => fetchVideoText = 'Please enter a URL 🤗');
-                    return;
+                  FilePickerResult? result = await FilePicker.platform.pickFiles(
+                    type: FileType.video,
+                    allowMultiple: false,
+                  );
+
+                  if (result != null) {
+                    File file = File(result.files.single.path!);
+                    // Upload video to firebase storage
+                    final videoDoc =
+                        FirebaseFirestore.instance.collection('videos').doc();
+                    debugPrint('Uploading video to firebase storage');
+                    await FirebaseStorage.instance
+                        .ref('video_inputs')
+                        .child('${videoDoc.id}.mp4')
+                        .putFile(file);
+                    debugPrint('Saving video data to firestore');
+                    await videoDoc.set({
+                      'id': videoDoc.id,
+                      'createdAt': DateTime.now(),
+                      'originalUrl': file.path,
+                      'title': videoDoc.id,
+                      'uid': FirebaseAuth.instance.currentUser?.uid,
+                    });
                   }
-
-                  if (fetchVideoText != 'Fetch video') return;
-                  setState(() => fetchVideoText = 'Fetching video... ⏳');
-                  final originalUrl = _urlController.text;
-                  final videoDoc =
-                      FirebaseFirestore.instance.collection('videos').doc();
-                  final response = await callGCF({
-                    'action': 'download',
-                    'url': originalUrl,
-                    'video_id': videoDoc.id,
-                  });
-
-                  if (response['message'].contains('not a valid URL')) {
-                    setState(() => fetchVideoText = 'Not a valid URL ❌');
-                    return;
-                  }
-
-                  final title = response['title'];
-                  await videoDoc.set({
-                    'id': videoDoc.id,
-                    'createdAt': DateTime.now(),
-                    'originalUrl': originalUrl,
-                    'title': title,
-                    'uid': FirebaseAuth.instance.currentUser?.uid,
-                  });
-                  setState(() => fetchVideoText = 'Done fetching ✅');
                 },
-                child: Text(
-                  fetchVideoText,
-                  style: TextStyle(fontSize: 16),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.upload, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Upload New Video',
+                      style: TextStyle(
+                        fontSize: 16, 
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.only(left: 16, right: 16),
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  type: FileType.video,
-                  allowMultiple: false,
-                );
-
-                if (result != null) {
-                  File file = File(result.files.single.path!);
-                  // Upload video to firebase storage
-                  final videoDoc =
-                      FirebaseFirestore.instance.collection('videos').doc();
-                  debugPrint('Uploading video to firebase storage');
-                  await FirebaseStorage.instance
-                      .ref('video_inputs')
-                      .child('${videoDoc.id}.mp4')
-                      .putFile(file);
-                  debugPrint('Saving video data to firestore');
-                  await videoDoc.set({
-                    'id': videoDoc.id,
-                    'createdAt': DateTime.now(),
-                    'originalUrl': file.path,
-                    'title': videoDoc.id,
-                    'uid': FirebaseAuth.instance.currentUser?.uid,
-                  });
-                }
-              },
-              child: const Text(
-                'Upload video',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.only(left: 16, right: 16),
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Your Videos',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ),
-          VideoList(),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   @override
   void dispose() {
-    _urlController.dispose();
     super.dispose();
   }
 }
