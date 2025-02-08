@@ -8,6 +8,7 @@ import json
 import uuid
 from create_video import create_video
 from snippets import generate_snippets
+
 initialize_app(credentials.Certificate("firebase_private_key.json"))
 
 app = Flask(__name__)
@@ -120,15 +121,14 @@ def transcribe(body):
 def fireworks_transcribe(url):
     from fireworks.client.audio import AudioInference
 
-    # Prepare client
     client = AudioInference(
-        model="whisper-v3",
-        base_url="https://audio-prod.us-virginia-1.direct.fireworks.ai",
+        model="whisper-v3-turbo",
+        base_url="https://audio-turbo.us-virginia-1.direct.fireworks.ai",
     )
 
     print("transcribing audio")
     result = client.transcribe(
-        audio=url, 
+        audio=url,
         language="en",
         response_format="verbose_json",
         timestamp_granularities=["word"],

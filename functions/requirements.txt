@@ -3,7 +3,7 @@ firebase_functions==0.4.2
 fireworks-ai==0.15.12
 google-generativeai==0.8.4
 moviepy==2.1.2
-opencv-python==4.11.0.86
+opencv-python-headless==4.11.0.86
 pydub==0.25.0
 yt-dlp==2025.1.26
 nltk==3.9.1
