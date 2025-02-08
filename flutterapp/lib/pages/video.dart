@@ -30,7 +30,7 @@ class VideoPage extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '1) Transcribe',
+                  'Transcript',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -45,7 +45,7 @@ class VideoPage extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '2) Clips',
+                  'Clips',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -61,8 +61,7 @@ class VideoPage extends StatelessWidget {
                           final videoNotifier = context.read<VideoNotifier>();
                           final response = await callGCF({
                             'action': 'generate_snippets',
-                            'transcript':
-                                videoNotifier.video?.transcriptText,
+                            'transcript': videoNotifier.video?.transcriptText,
                           });
                           FirebaseFirestore.instance
                               .collection('videos')
@@ -123,7 +122,8 @@ class _NoTranscriptState extends State<NoTranscript> {
           FirebaseFirestore.instance.collection('videos').doc(video.id).update({
             'transcriptText': response['text'],
           });
-          videoNotifier.setVideo(video.copyWith(transcriptText: response['text']));
+          videoNotifier
+              .setVideo(video.copyWith(transcriptText: response['text']));
         },
         text: isTranscribing ? 'Transcribing... ⏳' : 'Transcribe',
       ),
@@ -138,19 +138,43 @@ class YesTranscript extends StatelessWidget {
   Widget build(BuildContext context) {
     final video = context.watch<VideoNotifier>().video;
 
-    return GestureDetector(
-      onTap: () {
-        MyNavigator.pushNamed('/transcript');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-        ),
-        padding: const EdgeInsets.all(8),
-        child: Text(
-          video?.transcriptText ?? '',
-          overflow: TextOverflow.ellipsis,
-          maxLines: 4,
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: () {
+          MyNavigator.pushNamed('/transcript');
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                video?.transcriptText ?? '',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 4,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Read more',
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -165,15 +189,15 @@ class SnippetWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Card(
+      elevation: 2,
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: snippet.url == null
+            ? ClipNotMade(video: video, snippet: snippet)
+            : ClipMade(video: video, snippet: snippet),
       ),
-      child: snippet.url == null
-          ? ClipNotMade(video: video, snippet: snippet)
-          : ClipMade(video: video, snippet: snippet),
     );
   }
 }
@@ -209,30 +233,44 @@ class _ClipMadeState extends State<ClipMade> {
 
   @override
   Widget build(BuildContext context) {
+    final videoWidth = MediaQuery.of(context).size.width * 0.3;
     return InkWell(
       onTap: () {
         MyNavigator.pushNamed('/video_player');
       },
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.3,
-            child: FutureBuilder(
-              future: _initializeVideoPlayerFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return AspectRatio(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: videoWidth,
+              child: FutureBuilder(
+                future: _initializeVideoPlayerFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    return AspectRatio(
+                      aspectRatio: 9 / 16,
+                      child: VideoPlayer(_controller),
+                    );
+                  }
+                  return const AspectRatio(
                     aspectRatio: 9 / 16,
-                    child: VideoPlayer(_controller),
+                    child: Center(child: CircularProgressIndicator()),
                   );
-                }
-                return const Center(child: CircularProgressIndicator());
-              },
+                },
+              ),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(widget.snippet.text),
+            child: SizedBox(
+              height: videoWidth * 16 / 9,
+              child: Text(
+                widget.snippet.text,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
           ),
         ],
       ),
@@ -248,6 +286,7 @@ class ClipNotMade extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final videoWidth = MediaQuery.of(context).size.width * 0.3;
     return InkWell(
       onTap: () async {
         final response = await callGCF({
@@ -264,7 +303,25 @@ class ClipNotMade extends StatelessWidget {
           'snippets': video.snippets.map((e) => e.toJson()).toList(),
         });
       },
-      child: Text(snippet.text),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(
+            Icons.add_circle_outline,
+            color: Theme.of(context).primaryColor,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SizedBox(
+              height: videoWidth * 16 / 9,
+              child: Text(
+                snippet.text,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
