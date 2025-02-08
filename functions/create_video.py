@@ -23,6 +23,8 @@ def create_video(input_video_path, output_video_path, transcript, snippet):
     first_timestamp = lines[0]["timestamp"]
     for i in range(len(lines)):
         lines[i]["timestamp"] = lines[i]["timestamp"] - first_timestamp
+    start_time -= first_timestamp
+    end_time -= first_timestamp
     
     for line in lines:
         print(f"{line['timestamp']}: {line['line']}")
