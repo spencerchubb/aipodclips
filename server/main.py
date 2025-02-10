@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, make_response
 from flask_cors import CORS
-from firebase_admin import auth, credentials, initialize_app, storage
+from firebase_admin import auth, credentials, firestore, initialize_app, storage
 import datetime
 import yt_dlp
 import tempfile
@@ -17,8 +17,15 @@ CORS(app)
 @app.route('/')
 def index():
     jwt = request.cookies.get('jwt')
-    user = auth.verify_session_cookie(jwt)
-    return render_template('index.html', user=user)
+    user = auth.verify_session_cookie(jwt) if jwt else None
+    if user:
+        # user videos
+        db = firestore.client()
+        videos = db.collection('videos').where(filter=firestore.FieldFilter('uid', '==', user['uid'])).get()
+        videos = [video.to_dict() for video in videos]
+        return render_template('home.html', user=user, videos=videos)
+    else:
+        return render_template('index.html')
 
 @app.route('/signin')
 def signin():

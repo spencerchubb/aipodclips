@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiPodClips</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/logo.svg">
+    <link rel="stylesheet" href="/static/main.css">
+    <style>
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--blue-950);
+            padding: 1rem 2rem;
+            color: var(--blue-50);
+        }
+
+        .top-bar a {
+            color: var(--blue-50);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .top-bar .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .top-bar .logo img {
+            width: 40px; /* Adjust logo size */
+            height: auto;
+            margin-right: 0.5rem;
+        }
+
+        .top-bar .sign-in {
+            background: var(--blue-700);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .top-bar .sign-in:hover {
+            background: var(--blue-600);
+        }
+
+        .upload-video-button {
+            background: var(--blue-700);
+            color: var(--blue-50);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-video-button:hover {
+            background: var(--blue-600);
+            transform: translateY(-1px);
+        }
+
+        .upload-video-button:active {
+            transform: translateY(0);
+        }
+
+        #videosDiv {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-card {
+            color: var(--blue-950);
+            text-decoration: none;
+            padding: 16px;
+            border-top: 1px solid #aaa;
+            cursor: pointer;
+
+            &:hover {
+                background: var(--blue-100);
+            }
+
+            &:last-child {
+                border-bottom: 1px solid #aaa;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <div class="logo">
+                <img src="/static/logo.svg" alt="AiPodClips Logo">
+                AiPodClips
+            </div>
+        </a>
+    </div>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 16px;">Your Videos</h2>
+            <button class="upload-video-button" style="margin: 16px;">Upload Video</button>
+        </div>
+        <div id="videosDiv"></div>
+    </div>
+    </div>
+</body>
+
+<script id="pageData" type="application/json">
+{
+    "videos": {{ videos | tojson | safe }}
+}
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+} from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+
+const firebaseConfig = { apiKey: "AIzaSyDXhSFHRSNoc7fZ_hV9OSn_RQ5KG8wnHdg", authDomain: "aipodclips-8369c.firebaseapp.com", projectId: "aipodclips-8369c", storageBucket: "aipodclips-8369c.firebasestorage.app", messagingSenderId: "679796459336", appId: "1:679796459336:web:87283fcb3c2954eb3a557d", measurementId: "G-Q43ZFBNYN7" };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const storage = getStorage();
+const firestore = getFirestore();
+
+const pageData = JSON.parse(document.getElementById('pageData').textContent);
+const videos = pageData.videos;
+
+document.querySelector('.upload-video-button').addEventListener('click', () => {
+    console.log('Upload video button clicked');
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'video/*';
+    fileInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        console.log(file);
+
+        console.log('Uploading video to firebase storage');
+        const storageRef = ref(storage, `video_inputs/${file.name}`);
+        await uploadBytes(storageRef, file);
+
+        console.log('Saving video data to firestore');
+        const videoDoc = doc(collection(firestore, 'videos'));
+        const video = {
+            id: videoDoc.id,
+            createdAt: Date.now(),
+            originalUrl: file.name,
+            title: file.name,
+            uid: auth.currentUser.uid,
+        };
+        await setDoc(videoDoc, video);
+        videosDiv.innerHTML = renderVideo(video) + videosDiv.innerHTML;
+    });
+    fileInput.click();
+});
+
+function renderVideo(video) {
+    return `<a id="${video.id}" href="/video/${video.id}" class="video-card">
+        <p style="display: inline-block;">${video.title}</p>
+    </a>`;
+}
+
+videos.forEach(video => {
+    videosDiv.innerHTML += renderVideo(video);
+});
+</script>
+
+</html>
