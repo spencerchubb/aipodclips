@@ -3,11 +3,6 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "functions": {
-    "source": "functions",
-    "runtime": "python312",
-    "virtualenv": "venv"
-  },
   "emulators": {
     "functions": {
       "port": 5001
