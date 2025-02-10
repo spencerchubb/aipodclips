@@ -1,0 +1,24 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+    --blue-50: #f0f6fe;
+    --blue-100: #dee9fb;
+    --blue-200: #c4dbf9;
+    --blue-300: #9bc3f5;
+    --blue-400: #7faff0;
+    --blue-500: #4a82e7;
+    --blue-600: #3565db;
+    --blue-700: #2c51c9;
+    --blue-800: #2943a4;
+    --blue-900: #273c81;
+    --blue-950: #1c274f;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    background-color: var(--blue-50);
+    color: var(--blue-950);
+}

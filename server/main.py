@@ -1,6 +1,6 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, make_response
 from flask_cors import CORS
-from firebase_admin import credentials, initialize_app, storage
+from firebase_admin import auth, credentials, initialize_app, storage
 import datetime
 import yt_dlp
 import tempfile
@@ -16,7 +16,17 @@ CORS(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    jwt = request.cookies.get('jwt')
+    user = auth.verify_session_cookie(jwt)
+    return render_template('index.html', user=user)
+
+@app.route('/signin')
+def signin():
+    return render_template('signin.html')
+
+@app.route('/signup')
+def signup():
+    return render_template('signup.html')
 
 @app.route('/api', methods=['POST'])
 def api():
@@ -35,6 +45,18 @@ def api():
         return transcribe(body)
     else:
         return {"message": "Unknown action!"}
+
+@app.post("/on_authenticated")
+def on_authenticated():
+    body = request.json
+    res = make_response()
+    try:
+        month = 1209600 # 2 weeks, maximum expiration allowed by the library
+        jwt = auth.create_session_cookie(body['idToken'], expires_in=month)
+        res.set_cookie(key="jwt", value=jwt, expires=month)
+        return {"jwt": jwt}
+    except Exception as e:
+        return "Unauthorized", 401
 
 def create(body):
     video_id = body["video_id"]
