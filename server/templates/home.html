@@ -15,7 +15,7 @@
         justify-content: space-between;
         align-items: center;
         background: var(--blue-950);
-        padding: 1rem 2rem;
+        padding: 8px 32px;
         color: var(--blue-50);
     }
 
@@ -28,12 +28,31 @@
     .top-bar .logo {
         display: flex;
         align-items: center;
+        padding: 4px 8px 4px 4px;
+
+        &:hover {
+            border-radius: 4px;
+            background: var(--blue-900);
+        }
     }
 
     .top-bar .logo img {
-        width: 40px; /* Adjust logo size */
+        width: 40px;
         height: auto;
         margin-right: 0.5rem;
+    }
+
+    .user-picture {
+        width: 48px;
+        height: 48px;
+        border: none;
+        padding: 0;
+        border-radius: 50%;
+        cursor: pointer;
+
+        &:hover {
+            filter: brightness(0.6);
+        }
     }
 
     #videosDiv {
@@ -79,6 +98,7 @@
                 AiPodClips
             </div>
         </a>
+        <img src="{{ user.picture }}" alt="User Avatar" class="user-picture" />
     </div>
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -91,7 +111,8 @@
 
 <script id="pageData" type="application/json">
 {
-    "videos": {{ videos | tojson | safe }}
+    "videos": {{ videos | tojson | safe }},
+    "user": {{ user | tojson | safe }}
 }
 </script>
 
@@ -114,6 +135,8 @@ const firestore = getFirestore();
 
 const pageData = JSON.parse(document.getElementById('pageData').textContent);
 const videos = pageData.videos;
+const user = pageData.user;
+console.log(user);
 
 function renderVideo(video) {
     return `<a id="${video.id}" href="/video/${video.id}" class="video-card">
