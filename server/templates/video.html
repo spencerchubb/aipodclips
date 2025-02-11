@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ video.title }} | AiPodClips</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/logo.svg">
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+
+<style>
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--blue-950);
+        padding: 1rem 2rem;
+        color: var(--blue-50);
+    }
+
+    .top-bar a {
+        color: var(--blue-50);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .top-bar .logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .top-bar .logo img {
+        width: 40px;
+        height: auto;
+        margin-right: 0.5rem;
+    }
+
+    #clipsDiv {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .clip {
+        display: flex;
+        background: var(--blue-950);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        color: var(--blue-50);
+        gap: 8px;
+
+        & p {
+            max-height: 177px;
+            overflow: hidden;
+        }
+    }
+
+    .clip-video {
+        cursor: pointer;
+        border-radius: 8px;
+    }
+
+    .clip-no-video {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: dashed 1px var(--blue-300);
+        border-radius: 8px;
+        min-width: 100px;
+        max-width: 100px;
+        height: 177px;
+        cursor: pointer;
+        background: transparent;
+
+        &:hover {
+            background: var(--blue-900);
+        }
+    }
+</style>
+
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <div class="logo">
+                <img src="/static/logo.svg" alt="AiPodClips Logo">
+                AiPodClips
+            </div>
+        </a>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px;">
+        <video id="videoPlayer" style="width: 300px; height: 168px;" controls>
+            <source src="{{ video.video_url }}" type="video/mp4">
+        </video>
+        <div id="transcriptDiv"></div>
+        <div id="clipsDiv"></div>
+    </div>
+</body>
+
+<script id="pageData" type="application/json">
+{
+    "video": {{ video | tojson | safe }}
+}
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+import { getFirestore, collection, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+} from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+
+const firebaseConfig = { apiKey: "AIzaSyDXhSFHRSNoc7fZ_hV9OSn_RQ5KG8wnHdg", authDomain: "aipodclips-8369c.firebaseapp.com", projectId: "aipodclips-8369c", storageBucket: "aipodclips-8369c.firebasestorage.app", messagingSenderId: "679796459336", appId: "1:679796459336:web:87283fcb3c2954eb3a557d", measurementId: "G-Q43ZFBNYN7" };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const storage = getStorage();
+const firestore = getFirestore();
+
+const pageData = JSON.parse(document.getElementById('pageData').textContent);
+const video = pageData.video;
+
+function renderTranscript(video) {
+    if (video.transcriptText) {
+        const maxLength = 300;
+        const text = video.transcriptText;
+        if (text.length > maxLength) {
+            transcriptDiv.innerHTML = `<details class="transcript">
+                <summary>Transcript</summary>
+                <p>${text}</p>
+            </details>`;
+        } else {
+            transcriptDiv.innerHTML = `<div class="transcript"><p>${text}</p></div>`;
+        }
+    } else {
+        transcriptDiv.innerHTML = "<button id='transcribeButton' class='primary-button'>Transcribe Video</button>";
+    }
+}
+
+function renderClip(clip, index) {
+    if (clip.id) {
+        return `<video class="clip-video" data-clip-index="${index}" style="width: 100px; height: 177px;">
+            <source src="${clip.video_url}" type="video/mp4">
+        </video>`;
+    }
+    return `<button class="clip-no-video" data-clip-index="${index}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="var(--blue-300)"><path d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h12q.825 0 1.413.588T18 6v4.5l3.15-3.15q.25-.25.55-.125t.3.475v8.6q0 .35-.3.475t-.55-.125L18 13.5V18q0 .825-.587 1.413T16 20z"/></svg>
+        <p style="font-size: 13px; font-style: italic; color: var(--blue-300);">Make video</p>
+    </button>`;
+}
+
+function renderClips(video) {
+    if (video.clips && video.clips.length > 0) {
+        clipsDiv.innerHTML = video.clips.map((clip, index) => `<div class="clip">
+            ${renderClip(clip, index)}
+            <p>${clip.text}</p>
+        </div>`).join('');
+    } else {
+        clipsDiv.innerHTML = "<button id='clipsButton' class='primary-button'>Generate Clips</button>";
+    }
+}
+
+function renderAll(video) {
+    renderTranscript(video);
+    renderClips(video);
+}
+
+renderAll(video);
+
+async function post(path, data) {
+    console.log(path, data);
+    const response = await fetch(path, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    const json = await response.json();
+    console.log(json);
+    return json;
+}
+
+document.onclick = async (event) => {
+    const target = event.target;
+    if (target.id === 'transcribeButton') {
+        const response = await post('/api', {
+            action: 'transcribe',
+            video_id: video.id,
+        });
+        video.transcriptText = response.text;
+        renderTranscript(video);
+        await updateDoc(doc(collection(firestore, 'videos'), video.id), {
+            transcriptText: response.text,
+        });
+    } else if (target.id === 'clipsButton') {
+        const response = await post('/api', {
+            action: 'generate_snippets',
+            transcript: video.transcriptText,
+        });
+        const clips = response.snippets;
+        video.clips = clips;
+        renderClips(video);
+        await updateDoc(doc(collection(firestore, 'videos'), video.id), {
+            clips: clips,
+        });
+    } else if (target.classList.contains('clip-video')) {
+        const clipIndex = parseInt(target.dataset.clipIndex);
+        const clip = video.clips[clipIndex];
+        target.requestFullscreen();
+    } else if (target.classList.contains('clip-no-video')) {
+        console.log('clip-no-video');
+        const clipIndex = parseInt(target.dataset.clipIndex);
+        const clip = video.clips[clipIndex];
+        const response = await post('/api', {
+            action: 'create',
+            video_id: video.id,
+            snippet: clip.text,
+        });
+        console.log(response);
+        for (let i = 0; i < video.clips.length; i++) {
+            if (video.clips[i].text === clip.text) {
+                video.clips[i].id = response.snippet_id;
+            }
+        }
+        await updateDoc(doc(collection(firestore, 'videos'), video.id), {
+            clips: video.clips,
+        });
+        renderClips(video);
+    }
+}
+</script>
+
+</html>

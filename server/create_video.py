@@ -5,7 +5,6 @@ import cv2
 TARGET_W = 202
 TARGET_H = 360
 
-# TODO: Figure out why there is extra blank video at the end
 def create_video(input_video_path, output_video_path, transcript, snippet):
     start_time, end_time = calculate_times(transcript, snippet)
 

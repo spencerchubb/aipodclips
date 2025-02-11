@@ -35,6 +35,18 @@ def signin():
 def signup():
     return render_template('signup.html')
 
+@app.route('/video/<video_id>')
+def video(video_id):
+    db = firestore.client()
+    video = db.collection('videos').document(video_id).get().to_dict()
+    if not video:
+        return "Video not found", 404
+    video["video_url"] = storage.bucket("aipodclips-8369c.firebasestorage.app").blob(f"video_inputs/{video_id}").generate_signed_url(expiration=datetime.timedelta(minutes=15))
+    for clip in video.get("clips", []):
+        if "id" in clip:
+            clip["video_url"] = storage.bucket("aipodclips-8369c.firebasestorage.app").blob(f"video_outputs/{clip['id']}").generate_signed_url(expiration=datetime.timedelta(minutes=15))
+    return render_template('video.html', video=video)
+
 @app.route('/api', methods=['POST'])
 def api():
     body = request.json
@@ -71,11 +83,11 @@ def create(body):
 
     with tempfile.TemporaryDirectory() as temp_dir:
         bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
-        input_path = f"{temp_dir}/input_{video_id}.mp4"
+        input_path = f"{temp_dir}/input_{video_id}"
         output_path = f"{temp_dir}/output_{video_id}.mp4"
 
         # Download video
-        blob = bucket.blob(f"video_inputs/{video_id}.mp4")
+        blob = bucket.blob(f"video_inputs/{video_id}")
         blob.download_to_filename(input_path)
 
         # Download transcript
@@ -89,7 +101,7 @@ def create(body):
 
         # Upload video to firebase storage
         snippet_id = str(uuid.uuid4())
-        blob = bucket.blob(f"video_outputs/{snippet_id}.mp4")
+        blob = bucket.blob(f"video_outputs/{snippet_id}")
         blob.upload_from_filename(output_path)
 
         return {"snippet_id": snippet_id}
@@ -122,7 +134,7 @@ def download(body):
                 
                 print("uploading to firebase")
                 # Upload to Firebase Storage
-                blob = bucket.blob(f"video_inputs/{video_id}.mp4")
+                blob = bucket.blob(f"video_inputs/{video_id}")
                 blob.upload_from_filename(video_path)
                 
                 return {
@@ -139,7 +151,7 @@ def transcribe(body):
     bucket = storage.bucket("aipodclips-8369c.firebasestorage.app")
 
     # Get video
-    blob = bucket.blob(f"video_inputs/{video_id}.mp4")
+    blob = bucket.blob(f"video_inputs/{video_id}")
     signed_url = blob.generate_signed_url(expiration=datetime.timedelta(minutes=15))
 
     # Generate transcript
