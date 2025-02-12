@@ -25,6 +25,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void initState() {
     super.initState();
     _videoNotifier = context.read<VideoNotifier>();
+    print('current snippet index: ${_videoNotifier.video?.currentSnippetIndex}');
     _snippet = _videoNotifier
             .video?.clips[_videoNotifier.video?.currentSnippetIndex ?? 0] ??
         Snippet(text: '');
@@ -32,6 +33,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   }
 
   Future<void> _initializePlayer() async {
+    debugPrint('snippet url: ${_snippet.url}');
     _videoPlayerController = VideoPlayerController.networkUrl(
       Uri.parse(_snippet.url!),
     );

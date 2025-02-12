@@ -11,6 +11,56 @@ import '../widgets/custom_button.dart';
 class VideoPage extends StatelessWidget {
   const VideoPage({super.key});
 
+  List<Widget> clips(BuildContext context, Video video) {
+    if (video.transcriptText == null) {
+      return [];
+    }
+    return [
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'Clips',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      const SizedBox(height: 10),
+      video.clips.isEmpty
+          ? SizedBox(
+              width: double.infinity,
+              child: CustomButton(
+                onPressed: () async {
+                  final videoNotifier = context.read<VideoNotifier>();
+                  final response = await callGCF({
+                    'action': 'generate_snippets',
+                    'transcript': videoNotifier.video?.transcriptText,
+                  });
+                  FirebaseFirestore.instance
+                      .collection('videos')
+                      .doc(videoNotifier.video?.id)
+                      .update({'clips': response['clips']});
+                  final clips = (response['clips'] as List<dynamic>)
+                      .map<Snippet>((e) => Snippet.fromJson(e))
+                      .toList();
+                  videoNotifier
+                      .setVideo(videoNotifier.video?.copyWith(clips: clips));
+                },
+                text: 'Generate clips',
+              ),
+            )
+          : Column(
+              children: video.clips.map((clip) {
+                return SnippetWidget(
+                  video: video,
+                  snippet: clip,
+                );
+              }).toList(),
+            ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final video = context.watch<VideoNotifier>().video;
@@ -42,49 +92,7 @@ class VideoPage extends StatelessWidget {
                   ? const NoTranscript()
                   : const YesTranscript(),
               const SizedBox(height: 30),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Clips',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              video.clips.isEmpty
-                  ? SizedBox(
-                      width: double.infinity,
-                      child: CustomButton(
-                        onPressed: () async {
-                          final videoNotifier = context.read<VideoNotifier>();
-                          final response = await callGCF({
-                            'action': 'generate_snippets',
-                            'transcript': videoNotifier.video?.transcriptText,
-                          });
-                          FirebaseFirestore.instance
-                              .collection('videos')
-                              .doc(videoNotifier.video?.id)
-                              .update({'clips': response['clips']});
-                          final clips =
-                              (response['clips'] as List<dynamic>)
-                                  .map<Snippet>((e) => Snippet.fromJson(e))
-                                  .toList();
-                          videoNotifier.setVideo(videoNotifier.video
-                              ?.copyWith(clips: clips));
-                        },
-                        text: 'Generate clips',
-                      ),
-                    )
-                  : Column(
-                      children: video.clips.map((clip) {
-                        return SnippetWidget(
-                          video: video,
-                          snippet: clip,
-                        );
-                      }).toList(),
-                    ),
+              ...clips(context, video),
             ],
           ),
         ),
@@ -111,10 +119,11 @@ class _NoTranscriptState extends State<NoTranscript> {
         onPressed: () async {
           setState(() => isTranscribing = true);
           final videoNotifier = context.read<VideoNotifier>();
-          final video = videoNotifier.video;
+          Video? video = videoNotifier.video;
           if (video == null) {
             return;
           }
+
           final response = await callGCF({
             'action': 'transcribe',
             'video_id': video.id,
@@ -122,8 +131,18 @@ class _NoTranscriptState extends State<NoTranscript> {
           FirebaseFirestore.instance.collection('videos').doc(video.id).update({
             'transcriptText': response['text'],
           });
-          videoNotifier
-              .setVideo(video.copyWith(transcriptText: response['text']));
+          video = video.copyWith(transcriptText: response['text']);
+          videoNotifier.setVideo(video);
+
+          final titleResponse = await callGCF({
+            'action': 'generate_title',
+            'text': response['text'],
+          });
+          FirebaseFirestore.instance.collection('videos').doc(video.id).update({
+            'title': titleResponse['title'],
+          });
+          video = video.copyWith(title: titleResponse['title']);
+          videoNotifier.setVideo(video);
         },
         text: isTranscribing ? 'Transcribing... ⏳' : 'Transcribe',
       ),
@@ -236,6 +255,10 @@ class _ClipMadeState extends State<ClipMade> {
     final videoWidth = MediaQuery.of(context).size.width * 0.3;
     return InkWell(
       onTap: () {
+        final videoNotifier = context.read<VideoNotifier>();
+        videoNotifier.setVideo(videoNotifier.video?.copyWith(
+          currentSnippetIndex: widget.video.clips.indexOf(widget.snippet),
+        ));
         MyNavigator.pushNamed('/video_player');
       },
       child: Row(

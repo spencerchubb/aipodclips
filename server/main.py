@@ -8,6 +8,7 @@ import json
 import uuid
 from create_video import create_video
 from snippets import generate_snippets
+from title import generate_title
 
 initialize_app(credentials.Certificate("firebase_private_key.json"))
 
@@ -60,6 +61,8 @@ def api():
         return download(body)
     elif body["action"] == "generate_snippets":
         return generate_snippets(body)
+    elif body["action"] == "generate_title":
+        return generate_title(body)
     elif body["action"] == "transcribe":
         return transcribe(body)
     else:

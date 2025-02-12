@@ -36,7 +36,11 @@ def create_video(input_video_path, output_video_path, transcript, snippet):
     for i in range(len(lines)):
         clip_start_time = lines[i]["timestamp"]
         clip_end_time = lines[i+1]["timestamp"] if i+1 < len(lines) else end_time
-        video_clip = video.subclipped(clip_start_time, clip_end_time)
+        try:
+            video_clip = video.subclipped(clip_start_time, clip_end_time)
+        except Exception as e:
+            print(f"Error with subclipping: {e}")
+            continue
         text_clip = mp.TextClip(text=lines[i]["line"], font="Arial.ttf", font_size=18, stroke_color="white", color="black", stroke_width=1)
         text_clip = text_clip.with_duration(clip_end_time - clip_start_time)
         text_clip = text_clip.with_position((0.5 - 0.5 * text_clip.size[0] / TARGET_W, 0.5), relative=True)

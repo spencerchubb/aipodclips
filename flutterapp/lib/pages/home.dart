@@ -18,6 +18,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String uploadButtonText = 'Upload New Video';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,6 +47,9 @@ class _HomePageState extends State<HomePage> {
 
                   if (result != null) {
                     File file = File(result.files.single.path!);
+                    setState(() {
+                      uploadButtonText = 'Uploading... ⏳';
+                    });
                     // Upload video to firebase storage
                     final videoDoc =
                         FirebaseFirestore.instance.collection('videos').doc();
@@ -61,9 +66,12 @@ class _HomePageState extends State<HomePage> {
                       'title': videoDoc.id,
                       'uid': FirebaseAuth.instance.currentUser?.uid,
                     });
+                    setState(() {
+                      uploadButtonText = 'Upload New Video';
+                    });
                   }
                 },
-                text: 'Upload New Video',
+                text: uploadButtonText,
                 icon: Icons.upload,
               ),
             ),
