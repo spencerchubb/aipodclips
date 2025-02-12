@@ -78,6 +78,75 @@
             background: var(--blue-900);
         }
     }
+
+    .clip-text {
+        flex: 1;
+    }
+
+    .clip-content {
+        cursor: pointer;
+        max-height: 177px;
+        overflow: hidden;
+        padding: 4px;
+    }
+
+    .clip-content:hover {
+        background: var(--blue-900);
+        border-radius: 4px;
+    }
+
+    .edit-controls {
+        height: 177px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .clip-textarea {
+        width: 100%;
+        flex-grow: 1;
+        background: var(--blue-900);
+        color: var(--blue-50);
+        border: none;
+        outline: 1px solid var(--blue-500);
+        border-radius: 4px;
+        padding: 4px;
+        font-size: 16px;
+        font-family: inherit;
+        resize: vertical;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    .save-button {
+        background: var(--blue-900);
+        color: var(--blue-50);
+        border: 1px solid var(--blue-500);
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+
+        &:hover {
+            background: var(--blue-700);
+        }
+    }
+    
+    .cancel-button {
+        background: transparent;
+        color: var(--blue-300);
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+
+        &:hover {
+            background: var(--blue-900);
+        }
+    }
 </style>
 
 <body>
@@ -157,7 +226,16 @@ function renderClips(video) {
     if (video.clips && video.clips.length > 0) {
         clipsDiv.innerHTML = video.clips.map((clip, index) => `<div class="clip">
             ${renderClip(clip, index)}
-            <p>${clip.text}</p>
+            <div class="clip-text" data-clip-index="${index}">
+                <p class="clip-content">${clip.text}</p>
+                <div class="edit-controls" style="display: none;">
+                    <textarea class="clip-textarea">${clip.text}</textarea>
+                    <div class="button-group">
+                        <button class="cancel-button">Cancel</button>
+                        <button class="save-button">Save</button>
+                    </div>
+                </div>
+            </div>
         </div>`).join('');
     } else {
         clipsDiv.innerHTML = "<button id='clipsButton' class='primary-button'>Generate Clips</button>";
@@ -224,13 +302,49 @@ document.onclick = async (event) => {
         console.log(response);
         for (let i = 0; i < video.clips.length; i++) {
             if (video.clips[i].text === clip.text) {
-                video.clips[i].id = response.snippet_id;
+                video.clips[i].id = response.clip_id;
             }
         }
         await updateDoc(doc(collection(firestore, 'videos'), video.id), {
             clips: video.clips,
         });
         renderClips(video);
+    } else if (target.classList.contains('clip-content')) {
+        const clipText = target.closest('.clip-text');
+        const controls = clipText.querySelector('.edit-controls');
+        target.style.display = 'none';
+        controls.style.display = 'flex';
+    } else if (target.classList.contains('save-button')) {
+        const clipText = target.closest('.clip-text');
+        const clipIndex = parseInt(clipText.dataset.clipIndex);
+        const content = clipText.querySelector('.clip-content');
+        const controls = clipText.querySelector('.edit-controls');
+        const textarea = clipText.querySelector('.clip-textarea');
+        
+        // Update the text in our data and UI
+        video.clips[clipIndex].text = textarea.value;
+        content.textContent = textarea.value;
+        
+        // Toggle visibility
+        content.style.display = 'block';
+        controls.style.display = 'none';
+        
+        // Update the text in the database
+        await updateDoc(doc(collection(firestore, 'videos'), video.id), {
+            clips: video.clips,
+        });
+    } else if (target.classList.contains('cancel-button')) {
+        const clipText = target.closest('.clip-text');
+        const content = clipText.querySelector('.clip-content');
+        const controls = clipText.querySelector('.edit-controls');
+        
+        // Reset textarea to original value
+        const textarea = clipText.querySelector('.clip-textarea');
+        textarea.value = content.textContent;
+        
+        // Toggle visibility
+        content.style.display = 'block';
+        controls.style.display = 'none';
     }
 }
 </script>

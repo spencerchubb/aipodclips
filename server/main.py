@@ -100,11 +100,11 @@ def create(body):
         create_video(input_path, output_path, transcript, snippet)
 
         # Upload video to firebase storage
-        snippet_id = str(uuid.uuid4())
-        blob = bucket.blob(f"video_outputs/{snippet_id}")
+        clip_id = str(uuid.uuid4())
+        blob = bucket.blob(f"video_outputs/{clip_id}")
         blob.upload_from_filename(output_path)
 
-        return {"snippet_id": snippet_id}
+        return {"clip_id": clip_id}
 
 def download(body):
     url = body["url"]

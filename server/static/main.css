@@ -16,9 +16,9 @@
     --blue-950: #1c274f;
 }
 
-body {
+body, textarea, input {
     font-family: 'Inter', sans-serif;
-    line-height: 1.6;
+    line-height: 1.6rem;
     background-color: var(--blue-50);
     color: var(--blue-950);
 }

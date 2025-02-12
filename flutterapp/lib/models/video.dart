@@ -42,7 +42,7 @@ class Video {
   final String id;
   final Timestamp createdAt;
   final String originalUrl;
-  final List<Snippet> snippets;
+  final List<Snippet> clips;
   final String title;
   final String uid;
   final String? transcriptText;
@@ -52,7 +52,7 @@ class Video {
     required this.id,
     required this.createdAt,
     required this.originalUrl,
-    required this.snippets,
+    required this.clips,
     required this.title,
     required this.uid,
     this.transcriptText,
@@ -65,7 +65,7 @@ class Video {
       id: doc.id,
       createdAt: json['createdAt'],
       originalUrl: json['originalUrl'],
-      snippets: (json['snippets'] ?? [])
+      clips: (json['clips'] ?? [])
           .map<Snippet>((e) => Snippet.fromJson(e))
           .toList(),
       title: json['title'],
@@ -78,7 +78,7 @@ class Video {
     String? id,
     Timestamp? createdAt,
     String? originalUrl,
-    List<Snippet>? snippets,
+    List<Snippet>? clips,
     String? title,
     String? uid,
     String? transcriptText,
@@ -88,7 +88,7 @@ class Video {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       originalUrl: originalUrl ?? this.originalUrl,
-      snippets: snippets ?? this.snippets,
+      clips: clips ?? this.clips,
       title: title ?? this.title,
       uid: uid ?? this.uid,
       transcriptText: transcriptText ?? this.transcriptText,

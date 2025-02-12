@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
                     debugPrint('Uploading video to firebase storage');
                     await FirebaseStorage.instance
                         .ref('video_inputs')
-                        .child('${videoDoc.id}.mp4')
+                        .child(videoDoc.id)
                         .putFile(file);
                     debugPrint('Saving video data to firestore');
                     await videoDoc.set({
@@ -120,13 +120,13 @@ class VideoCard extends StatelessWidget {
         final videoNotifier = context.read<VideoNotifier>();
         Video video = Video.fromDoc(doc!);
 
-        for (var i = 0; i < video.snippets.length; i++) {
-          final snippet = video.snippets[i];
-          if (snippet.id != null) {
+        for (var i = 0; i < video.clips.length; i++) {
+          final clip = video.clips[i];
+          if (clip.id != null) {
             final downloadUrl = await FirebaseStorage.instance
-                .ref('video_outputs/${snippet.id}.mp4')
+                .ref('video_outputs/${clip.id}')
                 .getDownloadURL();
-            video.snippets[i].url = downloadUrl;
+            video.clips[i].url = downloadUrl;
           }
         }
 

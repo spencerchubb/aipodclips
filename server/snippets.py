@@ -30,8 +30,8 @@ def generate_snippets(body):
     )
     chat_session = model.start_chat(history=[])
     response = chat_session.send_message(body["transcript"]).text
-    snippets = parse_snippets(response, body["transcript"])
-    return { "snippets": snippets }
+    clips = parse_snippets(response, body["transcript"])
+    return { "clips": clips }
 
 def find_closest_match(target_sentence, original_text_sentences):
     best_ratio = 0
@@ -45,7 +45,9 @@ def find_closest_match(target_sentence, original_text_sentences):
 
 def parse_snippets(llm_response, transcript_text):
     sentences = sent_tokenize(transcript_text)
-    snippets = [snippet.replace("-", "").strip() for snippet in llm_response.strip().split("\n")]
+    lines = llm_response.strip().split("\n")
+    lines = [line for line in lines if line.strip() and line.startswith("-")]
+    snippets = [line.replace("-", "").strip() for line in lines]
 
     output = []
     for snippet in snippets:

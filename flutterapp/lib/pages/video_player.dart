@@ -26,7 +26,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     super.initState();
     _videoNotifier = context.read<VideoNotifier>();
     _snippet = _videoNotifier
-            .video?.snippets[_videoNotifier.video?.currentSnippetIndex ?? 0] ??
+            .video?.clips[_videoNotifier.video?.currentSnippetIndex ?? 0] ??
         Snippet(text: '');
     _initializePlayer();
   }

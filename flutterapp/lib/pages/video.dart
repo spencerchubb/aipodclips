@@ -53,7 +53,7 @@ class VideoPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              video.snippets.isEmpty
+              video.clips.isEmpty
                   ? SizedBox(
                       width: double.infinity,
                       child: CustomButton(
@@ -66,22 +66,22 @@ class VideoPage extends StatelessWidget {
                           FirebaseFirestore.instance
                               .collection('videos')
                               .doc(videoNotifier.video?.id)
-                              .update({'snippets': response['snippets']});
-                          final snippets =
-                              (response['snippets'] as List<dynamic>)
+                              .update({'clips': response['clips']});
+                          final clips =
+                              (response['clips'] as List<dynamic>)
                                   .map<Snippet>((e) => Snippet.fromJson(e))
                                   .toList();
                           videoNotifier.setVideo(videoNotifier.video
-                              ?.copyWith(snippets: snippets));
+                              ?.copyWith(clips: clips));
                         },
                         text: 'Generate clips',
                       ),
                     )
                   : Column(
-                      children: video.snippets.map((snippet) {
+                      children: video.clips.map((clip) {
                         return SnippetWidget(
                           video: video,
-                          snippet: snippet,
+                          snippet: clip,
                         );
                       }).toList(),
                     ),
@@ -294,13 +294,13 @@ class ClipNotMade extends StatelessWidget {
           'video_id': video.id,
           'snippet': snippet.text,
         });
-        for (var i = 0; i < video.snippets.length; i++) {
-          if (video.snippets[i].text == snippet.text) {
-            video.snippets[i].id = response['snippet_id'];
+        for (var i = 0; i < video.clips.length; i++) {
+          if (video.clips[i].text == snippet.text) {
+            video.clips[i].id = response['clip_id'];
           }
         }
         FirebaseFirestore.instance.collection('videos').doc(video.id).update({
-          'snippets': video.snippets.map((e) => e.toJson()).toList(),
+          'clips': video.clips.map((e) => e.toJson()).toList(),
         });
       },
       child: Row(
