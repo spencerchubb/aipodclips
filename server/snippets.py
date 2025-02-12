@@ -1,4 +1,7 @@
+import nltk
+nltk.download('punkt_tab')
 from nltk import sent_tokenize
+
 from difflib import SequenceMatcher
 import google.generativeai as genai
 import os
