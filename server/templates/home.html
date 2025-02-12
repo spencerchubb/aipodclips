@@ -119,7 +119,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
-import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 import {
     getAuth,
     GoogleAuthProvider,
@@ -182,7 +182,7 @@ document.querySelector('.upload-video-button').addEventListener('click', () => {
         console.log('Saving video data to firestore');
         const video = {
             id: videoDoc.id,
-            createdAt: Date.now(),
+            createdAt: serverTimestamp(),
             originalUrl: file.name,
             title: file.name,
             uid: auth.currentUser.uid,
